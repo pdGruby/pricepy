@@ -1,2 +1,2 @@
 # pricepy
-Welcome
+Welcome!
