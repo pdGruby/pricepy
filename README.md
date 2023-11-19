@@ -1,5 +1,5 @@
 # pricepy
-Welcome!
+Welcome! 123
 
 ## Git commit principles
 In this project, **we create commits with the compliance to the rules below:**
