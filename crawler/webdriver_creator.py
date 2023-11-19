@@ -10,9 +10,9 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 
 
 class WebdriverCreator:
-    check_api_key: str = os.getenv("CRAWLER_CHECK_API_KEY")
-    proxy_pool: List[str] = ["154.16.61.246:2000"]
-    user_agent_pool: List[str] = [
+    CHECK_API_KEY: str
+    PROXY_POOL: List[str] = ["154.16.61.246:2000"]
+    USER_AGENT_POOL: List[str] = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.9999.99 Safari/537.36',  # noqa
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0',  # noqa
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.9999.99 Safari/537.36 Edg/99.0.999.99',  # noqa
@@ -27,13 +27,14 @@ class WebdriverCreator:
 
     def __init__(self):
         load_dotenv()
+        self.CHECK_API_KEY = os.getenv("CRAWLER_CHECK_API_KEY")
 
         self.create_driver()
         self.check_driver_options()
 
     def create_driver(self):
-        proxy_address = random.choice(self.proxy_pool)
-        user_agent = random.choice(self.user_agent_pool)
+        proxy_address = random.choice(self.PROXY_POOL)
+        user_agent = random.choice(self.USER_AGENT_POOL)
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument(f'--proxy-server={proxy_address}')
@@ -49,8 +50,8 @@ class WebdriverCreator:
         print(f"Chromium driver created!\nSelected proxy: {proxy_address}\nSelected user-agent: {user_agent}")
 
     def check_driver_options(self):
-        visible_ip_address_request = f'https://api.whatismyip.com/ip.php?key={self.check_api_key}&output=json'
-        visible_user_agent_request = f'https://api.whatismyip.com/user-agent.php?key={self.check_api_key}&output=json'
+        visible_ip_address_request = f'https://api.whatismyip.com/ip.php?key={self.CHECK_API_KEY}&output=json'
+        visible_user_agent_request = f'https://api.whatismyip.com/user-agent.php?key={self.CHECK_API_KEY}&output=json'
 
         self.driver.get(visible_ip_address_request)
         ip_address = re.search('"([0-9.]+)"', self.driver.page_source)
