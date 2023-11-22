@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS data_staging
     "floor" TEXT,
     year_built TEXT,
     property_condition TEXT,
-    "location" TEXT
+    "location" TEXT,
+    "desc" TEXT,
+    image_url TEXT
 );
 
 
@@ -28,7 +30,7 @@ CREATE TABLE IF NOT EXISTS data_main
     "location" VARCHAR(30),
     CONSTRAINT ck_status CHECK (status IN ('pierwotny', 'wtórny')),
     CONSTRAINT ck_size CHECK ("size" BETWEEN 0 AND 1000),
-    CONSTRAINT ck_property_type CHECK (property_type IN ('dom', 'mieszkanie')),
+    CONSTRAINT ck_property_type CHECK (property_type IN ('dom', 'kamienica', 'blok')),
     CONSTRAINT ck_rooms CHECK (rooms BETWEEN 0 AND 20),
     CONSTRAINT ck_floor CHECK ("floor" BETWEEN 0 AND 30),
     CONSTRAINT ck_year_built CHECK (year_built BETWEEN 1000 AND 2050),
