@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS data_main
     year_built INT,
     property_condition VARCHAR(30),
     "location" VARCHAR(30),
+    "desc" TEXT,
+    image_url TEXT,
     CONSTRAINT ck_status CHECK (status IN ('pierwotny', 'wtórny')),
     CONSTRAINT ck_size CHECK ("size" BETWEEN 0 AND 1000),
     CONSTRAINT ck_property_type CHECK (property_type IN ('dom', 'kamienica', 'blok')),
