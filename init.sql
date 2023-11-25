@@ -39,9 +39,21 @@ CREATE TABLE IF NOT EXISTS data_main
     CONSTRAINT ck_property_condition CHECK (property_condition IN ('do zamieszkania', 'do wykończenia', 'do remontu'))
 );
 
+CREATE TABLE IF NOT EXISTS temp_table
+(
+    url TEXT PRIMARY KEY,
+    price TEXT,
+    "location" TEXT,
+    image_url TEXT
+);
+
+
 GRANT ALL ON data_staging TO "Zosia";
 GRANT ALL ON data_staging TO "Artur";
 GRANT ALL ON data_staging TO "Dominika";
 GRANT ALL ON data_main TO "Zosia";
 GRANT ALL ON data_main TO "Artur";
 GRANT ALL ON data_main TO "Dominika";
+GRANT ALL ON temp_table TO "Zosia";
+GRANT ALL ON temp_table TO "Artur";
+GRANT ALL ON temp_table TO "Kamil";
