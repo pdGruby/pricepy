@@ -32,7 +32,7 @@ class WebdriverCreator:
         self.CHECK_API_KEY = os.getenv("CRAWLER_CHECK_API_KEY")
 
         self.create_driver()
-        self.check_driver_options()
+        # self.check_driver_options()
 
     def create_driver(self):
         proxy_address = random.choice(self.PROXY_POOL)

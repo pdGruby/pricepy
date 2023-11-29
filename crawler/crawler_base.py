@@ -90,7 +90,8 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
             print("Something went wrong - could not load the offers. Saved a mirror of the webpage and will try"
                   f" to refresh the page in a moment. Refresh tries: {self.refresh_tries} out of 5")
 
-            self.save_webpage(file=f'./crawler/mirrors/{datetime.now()}_offers_load_issue.html')
+            mirror_path = f'./crawler/mirrors/{datetime.now().strftime("%Y_%m_%d___%H%M%S")}_offers_load_issue.html'
+            self.save_webpage(file=mirror_path)
             self.sleep_random_seconds(_from=15, to=45)
             self.driver.refresh()
             self.refresh_tries += 1

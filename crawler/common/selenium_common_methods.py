@@ -94,7 +94,7 @@ class SeleniumCommonMethods:
         if '.html' not in file:
             file += '.html'
 
-        with open(f"{file}", "w", encoding='utf-8') as f:
+        with open(f"{file}", "w+", encoding='utf-8') as f:
             f.write(self.driver.page_source)
 
     @staticmethod
