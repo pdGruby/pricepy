@@ -1,5 +1,7 @@
 # Our ignored files
 .vscode/
+crawler/mirrors/*.html
+test_file.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

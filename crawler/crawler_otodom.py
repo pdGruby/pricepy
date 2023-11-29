@@ -38,7 +38,3 @@ class CrawlerOTODOM(CrawlerBase):
             raise ValueError(f"Unknown domain for data extraction: {offer_url}")
 
         self.scraped_records = extractor.extract()
-
-
-crawler = CrawlerOTODOM()
-crawler.scrape()
