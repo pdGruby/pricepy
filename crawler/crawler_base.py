@@ -36,6 +36,8 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
                 self.scroll_to_the_bottom()
                 next_page_arrow = self.get_next_page_arrow()
                 offer_urls = self.get_offer_urls(already_scraped_urls)
+                if not self.check_if_offers_loaded_properly(offer_urls):
+                    continue
 
                 print(f"Found {len(offer_urls)} offers to scrape on the page number {page_counter}. Extracting the "
                       f"data...")
@@ -83,7 +85,7 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
 
         return [url[0] for url in scraped_urls]
 
-    def check_if_offers_loaded_properly(self, offer_urls):
+    def check_if_offers_loaded_properly(self, offer_urls) -> bool:
         if not offer_urls:
             print("Something went wrong - could not load the offers. Saved a mirror of the webpage and will try"
                   f" to refresh the page in a moment. Refresh tries: {self.refresh_tries} out of 5")
@@ -95,6 +97,8 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
             if self.refresh_tries > 5:
                 raise TimeoutError(f"Can not load the offers. Tried {self.refresh_tries} refreshes and still no "
                                    f"results. Webpage mirrors saved to the /crawler/mirrors/ folder.")
+            return False
+        return True
 
     @abstractmethod
     def enter_start_page(self, url: str) -> None:
