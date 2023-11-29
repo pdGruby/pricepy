@@ -30,6 +30,7 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
 
         for start_page in self.START_PAGES:
             self.enter_start_page(url=start_page)
+            print(f"Successfully entered the start page: {start_page}")
 
             page_counter = 1
             while True:
@@ -59,7 +60,8 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
                     next_page_arrow.click()
                     page_counter += 1
                 else:
-                    print("Successfully ran through all the offers from all pages for a given init page!")
+                    self.save_and_clear_scraped_records()
+                    print("Successfully ran through all the offers from all pages for a given start page!")
                     break
 
     def save_and_clear_scraped_records(self) -> None:
