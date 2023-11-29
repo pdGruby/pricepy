@@ -15,7 +15,9 @@ class DataExtractorOTODOM(ExtractorBase):
         price = self._find_element(By.XPATH, "//strong")
         location = self._find_element(By.XPATH, "//a[@aria-label='Adres']")
         desc = self._find_element(By.XPATH, "//div[@class='css-1wekrze e1lbnp621']")
-        image_url = self._find_element(By.XPATH, "//img[@class='image-gallery-image']").get_attribute('src')
+        image_url = self._find_element(By.XPATH, "//img[@class='image-gallery-image']")
+        if image_url:
+            image_url = image_url.get_attribute('src')
 
         upper_data_box = self._find_element(By.XPATH, "//div[@class='css-xr7ajr e10umaf20']")
         regexes_for_reading_upper_data_box = {
