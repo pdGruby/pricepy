@@ -1,6 +1,7 @@
 from typing import List
 from abc import ABC, abstractmethod
 
+from datetime import datetime
 import pandas as pd
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -22,6 +23,7 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
         DBConnector.__init__(self)
 
         self.scraped_records = {column.key: [] for column in DataStaging.__table__.columns}
+        self.refresh_tries = 1
 
     def scrape(self) -> None:
         already_scraped_urls = self.get_already_scraped_urls()
@@ -34,6 +36,8 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
                 self.scroll_to_the_bottom()
                 next_page_arrow = self.get_next_page_arrow()
                 offer_urls = self.get_offer_urls(already_scraped_urls)
+                if not self.check_if_offers_loaded_properly(offer_urls):
+                    continue
 
                 print(f"Found {len(offer_urls)} offers to scrape on the page number {page_counter}. Extracting the "
                       f"data...")
@@ -80,6 +84,21 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
             return []
 
         return [url[0] for url in scraped_urls]
+
+    def check_if_offers_loaded_properly(self, offer_urls) -> bool:
+        if not offer_urls:
+            print("Something went wrong - could not load the offers. Saved a mirror of the webpage and will try"
+                  f" to refresh the page in a moment. Refresh tries: {self.refresh_tries} out of 5")
+
+            self.save_webpage(file=f'./crawler/mirrors/{datetime.now()}_offers_load_issue.html')
+            self.sleep_random_seconds(_from=15, to=45)
+            self.driver.refresh()
+            self.refresh_tries += 1
+            if self.refresh_tries > 5:
+                raise TimeoutError(f"Can not load the offers. Tried {self.refresh_tries} refreshes and still no "
+                                   f"results. Webpage mirrors saved to the /crawler/mirrors/ folder.")
+            return False
+        return True
 
     @abstractmethod
     def enter_start_page(self, url: str) -> None:

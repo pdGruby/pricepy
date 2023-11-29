@@ -84,6 +84,19 @@ class SeleniumCommonMethods:
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[0])
 
+    def save_webpage(self, file: str) -> None:
+        """
+        Save the current webpage to a HTML file.
+
+        :param file: a path/file name to which the webpage will be saved.
+        :return: None
+        """
+        if '.html' not in file:
+            file += '.html'
+
+        with open(f"{file}", "w", encoding='utf-8') as f:
+            f.write(self.driver.page_source)
+
     @staticmethod
     def sleep_random_seconds(_from: float = 2, to: float = 10) -> None:
         time.sleep(random.uniform(_from, to))
