@@ -39,7 +39,6 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
 
                 #  If the page was not loaded correctly, then wait random seconds & try again collecting offers URL
                 if offer_urls is False and not isinstance(offer_urls, list):
-                    self.click_button_with_text(text='Akceptuję')
                     continue
 
                 print(f"Found {len(offer_urls)} offers to scrape on the page number {page_counter}. Extracting the "
