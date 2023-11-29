@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -24,8 +24,11 @@ class CrawlerOTODOM(CrawlerBase):
     def get_next_page_arrow(self) -> WebElement:
         return self._find_element(By.XPATH, "//button[@data-cy='pagination.next-page']")
 
-    def get_offer_urls(self, already_scraped_urls: List[str]) -> List[str]:
+    def get_offer_urls(self, already_scraped_urls: List[str]) -> Union[List[str], bool]:
         offers = self.driver.find_elements(By.XPATH, "//a[@class='css-cl00hf e1o4jl73']")
+        if not self.check_if_offers_loaded_properly(offers):
+            return False
+
         offer_urls = [offer.get_property('href') for offer in offers
                       if offer.get_property('href') not in already_scraped_urls]
 
