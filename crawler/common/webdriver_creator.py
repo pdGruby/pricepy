@@ -4,6 +4,7 @@ import random
 import re
 import os
 from dotenv import load_dotenv
+import subprocess
 
 from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -81,3 +82,12 @@ class WebdriverCreator:
                              f"Visible user-agent: {user_agent.group(1)}")
 
         print("Visible IP address & user-agent checked - all good!")
+
+    @staticmethod
+    def kill_webdriver_processes():
+        """Since simple self.driver.quit() doesn't work, we kill the processes with the bash commands"""
+        command_1 = 'pkill -f chromedriver'
+        command_2 = 'pkill -f chromium-browse'
+        result_1 = subprocess.run(command_1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result_2 = subprocess.run(command_2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        print(f'Chrome webdriver has been killed. Return results: {result_1}; {result_2}')
