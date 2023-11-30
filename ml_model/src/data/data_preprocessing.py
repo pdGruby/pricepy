@@ -1,18 +1,15 @@
-import sys
-
-sys.path.append("../../../_common/")
-from misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL
-from database_communicator.db_connector import DBConnector
+from _common.misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL
+from _common.database_communicator.db_connector import DBConnector
 import pandas as pd
 import re
 from sklearn.model_selection import train_test_split
 
 
-class DataPreprocessor:
+class DataPreprocessor(DBConnector):
     def __init__(self) -> None:
         """Initialize DataPreprocessor class and load data from database"""
-        connector = DBConnector()
-        engine = connector.create_sql_engine()
+        super().__init__()
+        engine = self.create_sql_engine()
 
         self.df = pd.read_sql_query("SELECT * FROM data_staging", con=engine)
 
@@ -118,11 +115,7 @@ class DataPreprocessor:
         self.df = self.df[FEAT_COLS + [TARGET_COL]]
 
     def run_preprocessing_pipeline(self):
-        """Run preprocessing pipeline
-
-        Returns:
-            pd.DataFrame : preprocessed data
-        """
+        """Run preprocessing pipeline"""
 
         self._process_price()
         self._handle_missing_and_duplicated_values()
@@ -137,7 +130,11 @@ class DataPreprocessor:
     def train_test_split(
         self
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """Split data into train and test set"""
+        """Split data into train and test set
+
+        Returns:
+            tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series] : train and test set
+        """
         X_train, X_test, y_train, y_test = train_test_split(
             self.df[FEAT_COLS],
             self.df[TARGET_COL],

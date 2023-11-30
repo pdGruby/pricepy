@@ -1,7 +1,36 @@
-LOCATION_LIST = ['Grunwald', 'Górczyn', 'Ławica', 'Łazarz', 'Junikowo', 'Jeżyce', 
-                 'Podolany', 'Sołacz', 'Wilda', 'Dębiec', 'Nowe Miasto', 'Łacina', 
-                 'Rataje', 'Starołęka Mała', 'Stare Miasto', 'Naramowice', 
-                 'Piątkowo', 'Winogrady', 'Chartowo']
+from _common.database_communicator.tables import DataMainCols
 
-FEAT_COLS = ['status', 'size', 'property_type', 'rooms', 'floor', 'year_built', 'property_condition', 'location']
-TARGET_COL = 'price'
+LOCATION_LIST = [
+    "Grunwald",
+    "Górczyn",
+    "Ławica",
+    "Łazarz",
+    "Junikowo",
+    "Jeżyce",
+    "Podolany",
+    "Sołacz",
+    "Wilda",
+    "Dębiec",
+    "Nowe Miasto",
+    "Łacina",
+    "Rataje",
+    "Starołęka Mała",
+    "Stare Miasto",
+    "Naramowice",
+    "Piątkowo",
+    "Winogrady",
+    "Chartowo",
+]
+
+FEAT_COLS = [
+    DataMainCols.STATUS,
+    DataMainCols.SIZE,
+    DataMainCols.PROPERTY_TYPE,
+    DataMainCols.ROOMS,
+    DataMainCols.FLOOR,
+    DataMainCols.YEAR_BUILT,
+    DataMainCols.PROPERTY_CONDITION,
+    DataMainCols.LOCATION,
+]
+
+TARGET_COL = DataMainCols.PRICE
