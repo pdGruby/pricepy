@@ -1,8 +1,8 @@
 import sys
 
-sys.path.append("../../../_common/database_communicator/")
-from variables import LOCATION_LIST, FEAT_COLS, TARGET_COL
-from db_connector import DBConnector
+sys.path.append("../../../_common/")
+from misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL
+from database_communicator.db_connector import DBConnector
 import pandas as pd
 import re
 from sklearn.model_selection import train_test_split
