@@ -35,4 +35,4 @@ def run_crawlers():
 
 
 if __name__ == "__main__":
-    run_crawlers.serve(name="2023-11-29", cron='0 17/12 * * *')
+    run_crawlers.serve(name="2023-11-29", cron='0 18,6 * * *')
