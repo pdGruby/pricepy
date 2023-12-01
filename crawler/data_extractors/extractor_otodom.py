@@ -12,14 +12,14 @@ class DataExtractorOTODOM(ExtractorBase):
         self.click_button_with_text(text='Akceptuję')  # needed when entering the otodom page from olx page
         self.click_button_with_text(text='Pokaż więcej')
 
-        price = self._find_element(By.XPATH, "//strong")
+        price = self._find_element(By.XPATH, "//strong[@data-cy='adPageHeaderPrice']")
         location = self._find_element(By.XPATH, "//a[@aria-label='Adres']")
         desc = self._find_element(By.XPATH, "//div[@class='css-1wekrze e1lbnp621']")
         image_url = self._find_element(By.XPATH, "//img[@class='image-gallery-image']")
         if image_url:
             image_url = image_url.get_attribute('src')
 
-        upper_data_box = self._find_element(By.XPATH, "//div[@class='css-xr7ajr e10umaf20']")
+        upper_data_box = self._find_element(By.XPATH, "//div[@data-testid='ad.top-information.table']")
         regexes_for_reading_upper_data_box = {
             DataStagingCols.FLOOR: 'piętro\\n(.*)\\n',
             DataStagingCols.SIZE: 'powierzchnia\\n([0-9]+[,]?[0-9]+)',
@@ -27,7 +27,7 @@ class DataExtractorOTODOM(ExtractorBase):
             DataStagingCols.PROPERTY_CONDITION: 'stan wykończenia\\n(.*)\\n'
         }
 
-        lower_data_box = self._find_element(By.XPATH, "//div[@class='css-1utkgzv e10umaf20']")
+        lower_data_box = self._find_element(By.XPATH, "//div[@data-testid='ad.additional-information.table']")
         regexes_for_reading_lower_data_box = {
             DataStagingCols.STATUS: 'rynek\\n(.*)\\n',
             DataStagingCols.YEAR_BUILT: 'rok budowy\\n(.*)\\n',

@@ -8,8 +8,8 @@ from crawler.data_extractors.extractor_otodom import DataExtractorOTODOM
 
 
 class CrawlerOTODOM(CrawlerBase):
-    START_PAGES = ['https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/wielkopolskie/poznan/poznan/poznan?ownerType' +
-                   'SingleSelect=ALL&by=DEFAULT&direction=DESC&viewType=listing',
+    START_PAGES = ['https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/wielkopolskie/poznan/poznan/poznan?limit=36&' +
+                   'ownerTypeSingleSelect=ALL&daysSinceCreated=7&by=DEFAULT&direction=DESC&viewType=listing',
                    'https://www.otodom.pl/pl/wyniki/sprzedaz/dom/wielkopolskie/poznan/poznan/poznan?ownerTypeSingle' +
                    'Select=ALL&by=DEFAULT&direction=DESC&viewType=listing']
 
