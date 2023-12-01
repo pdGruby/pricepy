@@ -35,12 +35,16 @@ class DataPreprocessor(DBConnector):
             .str.replace(" ", "")
             .replace(",", ".", regex=True)
             .replace("Zapytajocenę", None, regex=True)
-            .astype(float)
         )
 
+        mask = pd.to_numeric(self.df["price"], errors="coerce").notna()    
+        self.df = self.df[mask]
+        
         if filter_price > 0.0:
             self.df = self.df[self.df["price"] < filter_price]
 
+        self.df["price"] = self.df["price"].astype(float)
+        
     def _process_size(self):
         """Process size column"""
         self.df["size"] = self.df["size"].str.replace(",", ".").astype(float)
