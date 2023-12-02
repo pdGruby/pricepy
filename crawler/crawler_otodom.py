@@ -29,7 +29,7 @@ class CrawlerOTODOM(CrawlerBase):
         return button
 
     def get_offer_urls(self, already_scraped_urls: List[str]) -> Union[List[str], bool]:
-        offers = self.driver.find_elements(By.XPATH, "//a[@class='css-cl00hf e1o4jl73']")
+        offers = self.driver.find_elements(By.XPATH, "//a[@data-cy='listing-item-link']")
         if not self.check_if_offers_loaded_properly(offers):
             return False
 
