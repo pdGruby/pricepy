@@ -22,7 +22,11 @@ class CrawlerOTODOM(CrawlerBase):
         self.click_button_with_text(text='Akceptuję')
 
     def get_next_page_arrow(self) -> WebElement:
-        return self._find_element(By.XPATH, "//button[@data-cy='pagination.next-page']")
+        button = self._find_element(By.XPATH, "//button[@data-cy='pagination.next-page']")
+        if button.get_attribute('disabled'):
+            button = None
+
+        return button
 
     def get_offer_urls(self, already_scraped_urls: List[str]) -> Union[List[str], bool]:
         offers = self.driver.find_elements(By.XPATH, "//a[@class='css-cl00hf e1o4jl73']")
