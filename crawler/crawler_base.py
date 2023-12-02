@@ -59,10 +59,11 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
                     self.scroll_until(element=next_page_arrow)
                     next_page_arrow.click()
                     page_counter += 1
-                else:
-                    self.save_and_clear_scraped_records()
-                    print("Successfully ran through all the offers from all pages for a given start page!")
-                    break
+                    continue
+
+                self.save_and_clear_scraped_records()
+                print("Successfully ran through all the offers from all pages for a given start page!")
+                break
 
     def save_and_clear_scraped_records(self) -> None:
         sql_engine = self.create_sql_engine()
