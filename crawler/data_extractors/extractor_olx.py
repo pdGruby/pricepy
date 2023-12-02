@@ -12,7 +12,9 @@ class DataExtractorOLX(ExtractorBase):
         price = self._find_element(By.XPATH, '//h3')
         location = self._find_element(By.XPATH, "//div[@class='css-13l8eec']")
         desc = self._find_element(By.XPATH, "//div[@class='css-1t507yq er34gjf0']")
-        image_url = self._find_element(By.XPATH, "//img").get_attribute('src')
+        image_url = self._find_element(By.XPATH, "//img")
+        if image_url:
+            image_url = image_url.get_attribute('src')
 
         data_box = self._find_element(By.XPATH, "//ul[@class='css-sfcl1s']")
         regexes_for_reading_data_box = {
