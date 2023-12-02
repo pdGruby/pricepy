@@ -4,6 +4,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 from _common.database_communicator.db_connector import DBConnector
+from _common.misc.variables import LOCATION_LIST
 
 st.set_page_config(
     page_title='Pricepy',
@@ -12,12 +13,8 @@ st.set_page_config(
 
 
 def keep_valid_elements(text):
-    valid_locations = ['Grunwald', 'Górczyn', 'Ławica', 'Łazarz', 'Junikowo', 'Jeżyce', 'Podolany',
-                                       'Sołacz', 'Wilda', 'Dębiec', 'Nowe Miasto', 'Łacina', 'Rataje', 'Starołęka Mała',
-                                       'Stare Miasto', 'Naramowice', 'Piątkowo', 'Winogrady']
-
     valid_elements = [elem.strip() for elem in text.split(',') if
-                      elem.strip() in valid_locations]
+                      elem.strip() in LOCATION_LIST]
     return ' '.join(valid_elements)
 
 
