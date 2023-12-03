@@ -1,4 +1,4 @@
-from _common.misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL
+from _common.misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL, CATEGORICAL_FEATS, NUMERIC_FEATS
 from _common.database_communicator.db_connector import DBConnector
 import pandas as pd
 import re
@@ -37,17 +37,21 @@ class DataPreprocessor(DBConnector):
             .replace("Zapytajocenę", None, regex=True)
         )
 
-        mask = pd.to_numeric(self.df["price"], errors="coerce").notna()    
+        mask = pd.to_numeric(self.df["price"], errors="coerce").notna()
         self.df = self.df[mask]
+
+        self.df["price"] = self.df["price"].astype(float)
         
         if filter_price > 0.0:
             self.df = self.df[self.df["price"] < filter_price]
 
-        self.df["price"] = self.df["price"].astype(float)
-        
-    def _process_size(self):
+
+    def _process_size(self, filter_size: float = 0.0):
         """Process size column"""
         self.df["size"] = self.df["size"].str.replace(",", ".").astype(float)
+        
+        if filter_size > 0.0:
+            self.df = self.df[self.df["size"] < filter_size]
 
     def _process_location(self):
         """Process location column"""
@@ -98,21 +102,27 @@ class DataPreprocessor(DBConnector):
         )
 
     def _cast_types(self):
-        numerical_col = ["size", "rooms"]
-        categorical_col = [
-            "status",
-            "property_type",
-            "floor",
-            "year_built",
-            "property_condition",
-            "location",
-        ]
+        numerical_col = NUMERIC_FEATS
+        categorical_col = CATEGORICAL_FEATS
 
         for col in numerical_col:
             self.df[col] = self.df[col].astype(float)
 
         for col in categorical_col:
             self.df[col] = self.df[col].astype("category")
+
+    @staticmethod
+    def static_cast_types(df):
+        numerical_col = NUMERIC_FEATS
+        categorical_col = CATEGORICAL_FEATS
+
+        for col in numerical_col:
+            df[col] = df[col].astype(float)
+
+        for col in categorical_col:
+            df[col] = df[col].astype("category") 
+        
+        return df
 
     def _select_features(self):
         """Select features to be used in the model"""
@@ -121,9 +131,9 @@ class DataPreprocessor(DBConnector):
     def run_preprocessing_pipeline(self):
         """Run preprocessing pipeline"""
 
-        self._process_price()
+        self._process_price(filter_price=17500000.0)
         self._handle_missing_and_duplicated_values()
-        self._process_size()
+        self._process_size(filter_size=3000.0)
         self._process_location()
         self._process_floor()
         self._process_property_type()

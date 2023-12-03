@@ -33,4 +33,15 @@ FEAT_COLS = [
     DataMainCols.LOCATION,
 ]
 
+CATEGORICAL_FEATS = [
+    DataMainCols.STATUS,
+    DataMainCols.PROPERTY_TYPE,
+    DataMainCols.FLOOR,
+    DataMainCols.YEAR_BUILT,
+    DataMainCols.PROPERTY_CONDITION,
+    DataMainCols.LOCATION,
+]
+
+NUMERIC_FEATS = [DataMainCols.SIZE, DataMainCols.ROOMS]
+
 TARGET_COL = DataMainCols.PRICE
