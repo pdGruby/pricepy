@@ -4,7 +4,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 from _common.database_communicator.db_connector import DBConnector
-from _common.misc.variables import LOCATION_LIST
+from _common.misc.variables import LOCATION_LIST, PROPERTY_CONDITION_LIST, STATUS_LIST, PROPERTY_TYPE_LIST
 
 st.set_page_config(
     page_title='Pricepy',
@@ -79,6 +79,38 @@ st.markdown("""
             """)
 
 col7, col8 = st.columns([0.7, 0.3])
+
+with tab2:
+    col1, col2 = st.columns([0.5, 0.5])
+
+    with col1:
+        location = st.selectbox('Lokalizacja', options=LOCATION_LIST)
+        size = st.number_input('Metraż', min_value=1, value=60)
+
+    with col2:
+        property_condition = st.selectbox('Stan nieruchomości', options=PROPERTY_CONDITION_LIST)
+        rooms = st.slider('Liczba pomieszczeń', min_value=1, max_value=20, value=4)
+
+    with st.expander('Więcej cech'):
+        col1, col2 = st.columns([0.5, 0.5])
+
+        with col1:
+            status = st.selectbox('Rynek', options=STATUS_LIST, index=None, placeholder='brak informacji')
+            year_built = st.number_input('Rok budowy', min_value=1700, max_value=2050, value=None,
+                                         placeholder='brak informacji')
+
+        with col2:
+            property_type = st.selectbox('Typ budynku', options=PROPERTY_TYPE_LIST, index=None,
+                                         placeholder='brak informacji')
+            floor = st.number_input('Piętro', min_value=0, value=None, placeholder='brak informacji')
+
+    if st.button('Sprawdź', type='primary'):
+        df = pd.DataFrame(
+            [{'status': status, 'size': str(size), 'property_type': property_type, 'rooms': str(rooms),
+              'floor': str(floor), 'year_built': str(year_built), 'property_condition': property_condition,
+              'location': location}])
+        df.fillna("brak informacji", inplace=True)
+        st.markdown('## Przewidywana cena: ')
 
 with col7:
     st.markdown('#### Pricepy')

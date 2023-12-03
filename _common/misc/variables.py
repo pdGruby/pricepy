@@ -34,3 +34,10 @@ FEAT_COLS = [
 ]
 
 TARGET_COL = DataMainCols.PRICE
+
+PROPERTY_CONDITION_LIST = ['do remontu', 'do wykończenia', 'do zamieszkania']
+
+STATUS_LIST = ['wtórny', 'pierwotny']
+
+PROPERTY_TYPE_LIST = ['kamienica', 'blok', 'apartamentowiec', 'dom wolnostojący', 'bliźniak', 'szeregowiec']
+
