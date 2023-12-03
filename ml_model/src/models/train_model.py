@@ -351,7 +351,7 @@ if __name__ == "__main__":
     print("XGBoost Regressor")
     xgb_regressor = XGBoostRegressor()
     xgb_regressor.random_search_cv(
-        X_train, y_train, n_iter=2, random_state=30, verbose=2
+        X_train, y_train, n_iter=500, random_state=30, verbose=2
     )
     xgb_regressor.train(X_train, y_train, X_test, y_test, verbose=False)
     xgb_regressor.plot_learning_curves()
