@@ -40,14 +40,14 @@ class SeleniumCommonMethods:
     def scroll_to_the_bottom(self) -> None:
         last_height = -999
         while True:
-            scroll_by = random.randint(320, 800)
+            scroll_by = random.randint(640, 1200)
 
             self.driver.execute_script(f"window.scrollBy(0, {scroll_by});")
             current_height = self.driver.execute_script("return window.pageYOffset;")
             if current_height == last_height:
                 break
 
-            self.sleep_random_seconds(_from=0.1, to=0.3)
+            self.sleep_random_seconds(_from=0.8, to=1.5)
             last_height = current_height
 
     def scroll_until(self, element: WebElement) -> None:
@@ -83,6 +83,19 @@ class SeleniumCommonMethods:
     def close_active_tab(self) -> None:
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[0])
+
+    def save_webpage(self, file: str) -> None:
+        """
+        Save the current webpage to a HTML file.
+
+        :param file: a path/file name to which the webpage will be saved.
+        :return: None
+        """
+        if '.html' not in file:
+            file += '.html'
+
+        with open(f"{file}", "w+", encoding='utf-8') as f:
+            f.write(self.driver.page_source)
 
     @staticmethod
     def sleep_random_seconds(_from: float = 2, to: float = 10) -> None:

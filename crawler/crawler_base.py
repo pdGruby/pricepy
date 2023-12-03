@@ -1,6 +1,7 @@
 from typing import List
 from abc import ABC, abstractmethod
 
+from datetime import datetime
 import pandas as pd
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -22,18 +23,24 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
         DBConnector.__init__(self)
 
         self.scraped_records = {column.key: [] for column in DataStaging.__table__.columns}
+        self.refresh_tries = 1
 
     def scrape(self) -> None:
         already_scraped_urls = self.get_already_scraped_urls()
 
         for start_page in self.START_PAGES:
             self.enter_start_page(url=start_page)
+            print(f"Successfully entered the start page: {start_page}")
 
             page_counter = 1
             while True:
                 self.scroll_to_the_bottom()
                 next_page_arrow = self.get_next_page_arrow()
                 offer_urls = self.get_offer_urls(already_scraped_urls)
+
+                #  If the page was not loaded correctly, then wait random seconds & try again collecting offers URL
+                if offer_urls is False and not isinstance(offer_urls, list):
+                    continue
 
                 print(f"Found {len(offer_urls)} offers to scrape on the page number {page_counter}. Extracting the "
                       f"data...")
@@ -52,9 +59,11 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
                     self.scroll_until(element=next_page_arrow)
                     next_page_arrow.click()
                     page_counter += 1
-                else:
-                    print("Successfully ran through all the offers from all pages for a given init page!")
-                    break
+                    continue
+
+                self.save_and_clear_scraped_records()
+                print("Successfully ran through all the offers from all pages for a given start page!")
+                break
 
     def save_and_clear_scraped_records(self) -> None:
         sql_engine = self.create_sql_engine()
@@ -80,6 +89,22 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
             return []
 
         return [url[0] for url in scraped_urls]
+
+    def check_if_offers_loaded_properly(self, offer_urls) -> bool:
+        if not offer_urls:
+            print("Something went wrong - could not load the offers. Saved a mirror of the webpage and will try"
+                  f" to refresh the page in a moment. Refresh tries: {self.refresh_tries} out of 5")
+
+            mirror_path = f'./crawler/mirrors/{datetime.now().strftime("%Y_%m_%d___%H%M%S")}_offers_load_issue.html'
+            self.save_webpage(file=mirror_path)
+            self.sleep_random_seconds(_from=15, to=45)
+            self.driver.refresh()
+            self.refresh_tries += 1
+            if self.refresh_tries > 5:
+                raise TimeoutError(f"Can not load the offers. Tried {self.refresh_tries} refreshes and still no "
+                                   f"results. Webpage mirrors saved to the /crawler/mirrors/ folder.")
+            return False
+        return True
 
     @abstractmethod
     def enter_start_page(self, url: str) -> None:

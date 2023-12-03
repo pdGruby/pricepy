@@ -1,7 +1,10 @@
 pandas~=2.0.3
 pg8000~=1.30.3
+prefect~=2.14.3
 python-dotenv~=0.21.0
 selenium~=4.15.2
 SQLAlchemy~=1.4.0
 xgboost~=2.0.2
-```
+streamlit~=1.28.2
+requests~=2.31.0
+pillow~=10.1.0

@@ -4,10 +4,11 @@ import random
 import re
 import os
 from dotenv import load_dotenv
+import subprocess
 
 from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
-# from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service
 
 
 class WebdriverCreator:
@@ -21,6 +22,7 @@ class WebdriverCreator:
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0',  # noqa
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.9999.99 Safari/537.36'  # noqa
     ]
+    CHROME_WEBDRIVER_PATH: str = 'crawler/common/rasppi_chromedriver'
 
     selected_proxy: str = None
     selected_user_agent: str = None
@@ -31,7 +33,7 @@ class WebdriverCreator:
         self.CHECK_API_KEY = os.getenv("CRAWLER_CHECK_API_KEY")
 
         self.create_driver()
-        # self.check_driver_options()
+        self.check_driver_options()
 
     def create_driver(self):
         proxy_address = random.choice(self.PROXY_POOL)
@@ -40,14 +42,14 @@ class WebdriverCreator:
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument(f'--proxy-server={proxy_address}')
         chrome_options.add_argument(f"user-agent={user_agent}")
-        # chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--headless=new")
 
         # RASP PI OPTIONS
-        # service = Service(executable_path=self.chrome_webdriver_path)
+        # service = Service(executable_path=self.CHROME_WEBDRIVER_PATH)
         # driver = webdriver.Chrome(service=service, options=chrome_options)
-        # driver.set_window_size(1920, 1080)
 
         driver = webdriver.Chrome(options=chrome_options)
+        driver.set_window_size(1920, 1080)
 
         self.selected_proxy = proxy_address
         self.selected_user_agent = user_agent
@@ -80,3 +82,12 @@ class WebdriverCreator:
                              f"Visible user-agent: {user_agent.group(1)}")
 
         print("Visible IP address & user-agent checked - all good!")
+
+    @staticmethod
+    def kill_webdriver_processes():
+        """Since simple self.driver.quit() doesn't work, we kill the processes with the bash commands"""
+        command_1 = 'pkill -f chromedriver'
+        command_2 = 'pkill -f chromium-browse'
+        result_1 = subprocess.run(command_1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result_2 = subprocess.run(command_2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        print(f'Chrome webdriver has been killed. Return results: {result_1}; {result_2}')
