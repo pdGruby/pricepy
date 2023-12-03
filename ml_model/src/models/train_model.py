@@ -317,26 +317,17 @@ class RegressionModel:
         print("R2:", r2)
 
 
-def infer_model(model_path: str, data: Dict[str, List[Union[str, float]]]) -> float:
+def infer_model(model_path: str, data: pd.DataFrame) -> float:
     """This function is used to infer model on new data.
 
     Args:
         model_path (str): Model path
-        data (Dict[str, List[Union[str, float]]]): Data to be infered as a dictionary. Here is an example:
-        {'status' : ['pierwotny'],
-        'size' : [100.0],
-        'property_type' : ['kamienica'],
-        'rooms' : [1.0],
-        'floor' : ['2'],
-        'year_built' : ['2024'],
-        'property_condition' : ['do_wykonczenia'],
-        'location' : ['Stare Miasto']}
+        data (pd.DataFrame): Data to be infered as a DataFrame.
 
     Returns:
         float: Predicted price
     """
     model = XGBoostRegressor.load_model(model_path)
-    data = pd.DataFrame(data)
     data = DataPreprocessor.static_cast_types(data)
     return model.predict(data)[0]
 

@@ -5,6 +5,7 @@ from PIL import Image
 from io import BytesIO
 from _common.database_communicator.db_connector import DBConnector
 from _common.misc.variables import LOCATION_LIST, PROPERTY_CONDITION_LIST, STATUS_LIST, PROPERTY_TYPE_LIST
+from ml_model.src.models.train_model import *
 
 st.set_page_config(
     page_title='Pricepy',
@@ -105,12 +106,15 @@ with tab2:
             floor = st.number_input('Piętro', min_value=0, value=None, placeholder='brak informacji')
 
     if st.button('Sprawdź', type='primary'):
-        df = pd.DataFrame(
-            [{'status': status, 'size': str(size), 'property_type': property_type, 'rooms': str(rooms),
-              'floor': str(floor), 'year_built': str(year_built), 'property_condition': property_condition,
-              'location': location}])
-        df.fillna("brak informacji", inplace=True)
-        st.markdown('## Przewidywana cena: ')
+        floor = 'brak informacji' if floor is None else floor
+        year_built = 'brak informacji' if year_built is None else floor
+        data = {'status': [status], 'size': [size], 'property_type': [property_type], 'rooms': [rooms],
+                'floor': [str(floor)], 'year_built': [str(year_built)], 'property_condition': [property_condition],
+                'location': [location]}
+        data = pd.DataFrame(data)
+        data.fillna("brak informacji", inplace=True)
+        predicted_price = infer_model(model_path='ml_model/src/models/xgboost_regressor.pkl', data=data)
+        st.markdown('### Przewidywana cena: ' + str(predicted_price) + 'zł')
 
 with col7:
     st.markdown('#### Pricepy')
