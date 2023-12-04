@@ -1,25 +1,27 @@
 from _common.database_communicator.tables import DataMainCols
 
+# Please, do not reorder offhandedly the list below. It should be ordered from the most detailed locations, to the most
+# general
 LOCATION_LIST = [
-    "Grunwald",
-    "Górczyn",
-    "Ławica",
     "Łazarz",
+    "Ławica",
+    "Górczyn",
     "Junikowo",
-    "Jeżyce",
+    "Grunwald",
     "Podolany",
     "Sołacz",
+    "Jeżyce",
     "Wilda",
     "Dębiec",
-    "Nowe Miasto",
     "Łacina",
-    "Rataje",
     "Starołęka Mała",
-    "Stare Miasto",
     "Naramowice",
     "Piątkowo",
     "Winogrady",
     "Chartowo",
+    "Rataje",
+    "Stare Miasto",
+    "Nowe Miasto"
 ]
 
 FEAT_COLS = [

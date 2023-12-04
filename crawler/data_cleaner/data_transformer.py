@@ -43,7 +43,7 @@ class DataTransformer:
 
         # When a given information is missing, but it is not stored as NA, then convert the information to NA
         no_info_columns = [DataStagingCols.FLOOR, DataStagingCols.STATUS, DataStagingCols.PROPERTY_TYPE,
-                           DataStagingCols.YEAR_BUILT, DataStagingCols.PROPERTY_CONDITION]
+                           DataStagingCols.YEAR_BUILT, DataStagingCols.PROPERTY_CONDITION, DataStagingCols.ROOMS]
 
         data = self.replace_with_na(data, no_info_columns, 'brak informacji')
         data = self.replace_with_na(data, [DataStagingCols.PRICE], 'zapytaj o cenę')
@@ -102,7 +102,7 @@ class DataTransformer:
     def extract_location(value: Union[str, pd.NA]) -> Union[str, pd.NA]:
         matched_locs = [loc for loc in LOCATION_LIST if loc.lower() in value]
         if matched_locs:
-            return '/'.join(matched_locs)
+            return matched_locs[0]
         return pd.NA
 
     @staticmethod
