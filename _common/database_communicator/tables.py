@@ -43,6 +43,7 @@ class DataMain(Base):
 
     url = Column(String, primary_key=True)
     price = Column(Float)
+    currency = Column(String(5))
     status = Column(String(10))
     size = Column(Float)
     property_type = Column(String(10))
@@ -67,6 +68,7 @@ class DataMain(Base):
 class DataMainCols:
     URL: str = 'url'
     PRICE: str = 'price'
+    CURRENCY: str = 'currency'
     STATUS: str = 'status'
     SIZE: str = 'size'
     PROPERTY_TYPE: str = 'property_type'
@@ -76,7 +78,11 @@ class DataMainCols:
     PROPERTY_CONDITION: str = 'property_condition'
     LOCATION: str = 'location'
     DESC: str = 'desc'
-    IMAGE_URL = 'image_url'
+    IMAGE_URL: str = 'image_url'
+    INSERT_DATE: str = 'INSERT_DATE'
+    LAST_TIME_SEEN: str = 'LAST_TIME_SEEN'
+    ROW_HASH: str = 'ROW_HASH'
+    RUN_ID: str = 'RUN_ID'
 
 
 
