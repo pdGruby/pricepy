@@ -54,8 +54,7 @@ class DataTransformer:
     @staticmethod
     def replace_with_na(data: pd.DataFrame, columns: List[str], value_to_replace: Any) -> pd.DataFrame:
         for column in columns:
-            data[column] = data[column].replace(value_to_replace, pd.NA)
-            data[column] = data[column].replace(pd.NA, pd.NA)  # this line replaces Python 'None' values with pd.NA
+            data[column] = data[column].replace(value_to_replace, None)
         return data
 
     @staticmethod
@@ -70,45 +69,45 @@ class DataTransformer:
         return data
 
     @staticmethod
-    def extract_float(value: Union[str, pd.NA]) -> Union[float, pd.NA]:
+    def extract_float(value: Union[str, None]) -> Union[float, None]:
         if pd.isna(value):
-            return pd.NA
+            return None
 
         value = value.replace(' ', '')
         pattern = '([0-9]*[,]?[0-9]+)'
         value = re.search(pattern, value)
         if value is None:
-            return pd.NA
+            return None
 
         value = value.group(1).replace(',', '.')
         value = float(value)
         return value
 
     @staticmethod
-    def extract_currency(value: Union[str, pd.NA]) -> Union[str, pd.NA]:
+    def extract_currency(value: Union[str, None]) -> Union[str, None]:
         if pd.isna(value):
-            return pd.NA
+            return None
 
         value = value.replace(' ', '')
         pattern = '([0-9]*[,]?[0-9]+)(.*)'
         value = re.search(pattern, value)
         if value is None:
-            return pd.NA
+            return None
 
         value = value.group(2).upper()
         return value
 
     @staticmethod
-    def extract_location(value: Union[str, pd.NA]) -> Union[str, pd.NA]:
+    def extract_location(value: Union[str, None]) -> Union[str, None]:
         matched_locs = [loc for loc in LOCATION_LIST if loc.lower() in value]
         if matched_locs:
             return matched_locs[0]
-        return pd.NA
+        return None
 
     @staticmethod
-    def extract_floor(value: Union[str, pd.NA]) -> Union[int, pd.NA]:
+    def extract_floor(value: Union[str, None]) -> Union[int, None]:
         if pd.isna(value):
-            return pd.NA
+            return None
 
         value = value.replace(' ', '')
 
@@ -120,16 +119,16 @@ class DataTransformer:
         pattern = '(-?[0-9]{1,3})[/]([0-9]{1,2})'
         value = re.search(pattern, value)
         if value is None:
-            return pd.NA
+            return None
 
         value = value.group(1)
         value = int(value)
         return value
 
     @staticmethod
-    def extract_property_type(value: Union[str, pd.NA]) -> Union[str, pd.NA]:
+    def extract_property_type(value: Union[str, None]) -> Union[str, None]:
         if pd.isna(value):
-            return pd.NA
+            return None
 
         def search_keywords(actual_value, keywords):
             for keyword in keywords:
@@ -148,7 +147,7 @@ class DataTransformer:
         for category, keywords_ in categories_dict.items():
             if search_keywords(value, keywords_):
                 return category
-        return pd.NA
+        return None
 
     @staticmethod
     def cast_type(data: pd.DataFrame, column: str, col_type: Any):

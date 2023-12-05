@@ -5,6 +5,7 @@ from datetime import datetime
 import pandas as pd
 
 from _common.database_communicator.tables import DataMainCols
+from crawler.common.create_run_id import create_run_id
 
 
 class MetadataCreator:
@@ -19,7 +20,10 @@ class MetadataCreator:
         data[DataMainCols.INSERT_DATE] = today_date
         data[DataMainCols.LAST_TIME_SEEN] = today_date
         data[DataMainCols.ROW_HASH] = data.apply(self._create_row_hash, axis=1)
-        data[DataMainCols.RUN_ID] = today_date + '_' + self.flow_name
+        data[DataMainCols.RUN_ID] = create_run_id(self.flow_name)
+
+        data[DataMainCols.INSERT_DATE] = pd.to_datetime(data[DataMainCols.INSERT_DATE])
+        data[DataMainCols.LAST_TIME_SEEN] = pd.to_datetime(data[DataMainCols.LAST_TIME_SEEN])
 
         return data
 
