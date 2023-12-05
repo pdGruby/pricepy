@@ -3,6 +3,7 @@ from typing import List, Union
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
+from _common.database_communicator.tables import DataStagingCols
 from crawler.crawler_base import CrawlerBase
 from crawler.data_extractors.extractor_otodom import DataExtractorOTODOM
 
@@ -10,8 +11,8 @@ from crawler.data_extractors.extractor_otodom import DataExtractorOTODOM
 class CrawlerOTODOM(CrawlerBase):
     START_PAGES = ['https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/wielkopolskie/poznan/poznan/poznan?limit=36&' +
                    'ownerTypeSingleSelect=ALL&daysSinceCreated=7&by=DEFAULT&direction=DESC&viewType=listing',
-                   'https://www.otodom.pl/pl/wyniki/sprzedaz/dom/wielkopolskie/poznan/poznan/poznan?ownerTypeSingle' +
-                   'Select=ALL&by=DEFAULT&direction=DESC&viewType=listing']
+                   'https://www.otodom.pl/pl/wyniki/sprzedaz/dom/wielkopolskie/poznan/poznan/poznan?distanceRadius=0&' +
+                   'limit=36&ownerTypeSingleSelect=ALL&daysSinceCreated=7&by=DEFAULT&direction=DESC&viewType=listing']
 
     def __init__(self):
         super().__init__()
@@ -33,8 +34,13 @@ class CrawlerOTODOM(CrawlerBase):
         if not self.check_if_offers_loaded_properly(offers):
             return False
 
-        offer_urls = [offer.get_property('href') for offer in offers
-                      if offer.get_property('href') not in already_scraped_urls]
+        offer_urls = []
+        for offer in offers:
+            href = offer.get_property('href')
+            if href in self.main_scraped_urls:
+                self.seen_records_from_db[DataStagingCols.URL].append(href)
+                continue
+            offer_urls.append(href)
 
         return offer_urls
 

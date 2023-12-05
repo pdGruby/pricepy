@@ -60,11 +60,7 @@ class DataMain(Base):
     run_id = Column(String(30))
 
     ck_status = CheckConstraint(status.in_(['pierwotny', 'wtórny']))
-    ck_size = CheckConstraint(size.between(0, 5000))
     ck_property_type = CheckConstraint(property_type.in_(['dom', 'kamienica', 'blok', 'apartamentowiec', 'inne']))
-    ck_rooms = CheckConstraint(rooms.between(0, 1000))
-    ck_floor = CheckConstraint(floor.between(0, 1000))
-    ck_year_built = CheckConstraint(year_built.between(1000, 2050))
     ck_property_condition = CheckConstraint(property_condition.in_(['do zamieszkania', 'do wykończenia', 'do remontu',
                                                                     'stan surowy zamknięty', 'stan surowy otwarty']))
 
