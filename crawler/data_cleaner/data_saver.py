@@ -4,15 +4,17 @@ import pandas as pd
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection, Engine
+from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
-from _common.database_communicator.tables import DataMain, DataMainCols
+from _common.database_communicator.tables import DataMain, DataMainCols, DataStaging
 from crawler.common.create_run_id import create_run_id
 
 
 class DataSaver:
     engine: Engine
     conn: Connection
+    session: Session
     flow_name: str
 
     def save_data(self, data: pd.DataFrame) -> None:
@@ -31,6 +33,8 @@ class DataSaver:
             self._update_columns(already_in_db)
 
         self._delete_clone_table()
+        self.session.query(DataStaging).delete()
+        self.session.commit()
         print("The database has been successfully updated!")
 
     def _clone_table(self, table_name: str) -> None:

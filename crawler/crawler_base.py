@@ -2,12 +2,13 @@ from typing import List
 from abc import ABC, abstractmethod
 
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from _common.database_communicator.db_connector import DBConnector
-from _common.database_communicator.tables import DataStaging
+from _common.database_communicator.tables import DataStaging, DataMain
 from crawler.common.selenium_common_methods import SeleniumCommonMethods
 from crawler.common.webdriver_creator import WebdriverCreator
 
@@ -80,14 +81,21 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
             self.save_and_clear_scraped_records()
 
     def get_already_scraped_urls(self) -> List[str]:
+        cut_date = datetime.today() - relativedelta(weeks=4)
+
         session = self.create_session()
-        scraped_urls = session.query(DataStaging.url).all()
+        staging_scraped_urls = session.query(DataStaging.url).all()
+        main_scraped_urls = session.query(DataMain.url).where(DataMain.last_time_seen > cut_date).all()
         session.close()
 
-        if not scraped_urls:
+        if not staging_scraped_urls and not main_scraped_urls:
             return []
 
-        return [url[0] for url in scraped_urls]
+        staging_scraped_urls = [url[0] for url in staging_scraped_urls]
+        main_scraped_urls = [url[0] for url in main_scraped_urls]
+        scraped_urls = staging_scraped_urls + main_scraped_urls
+
+        return scraped_urls
 
     def check_if_offers_loaded_properly(self, offer_urls) -> bool:
         if not offer_urls:
