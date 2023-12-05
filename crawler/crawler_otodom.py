@@ -3,6 +3,7 @@ from typing import List, Union
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
+from _common.database_communicator.tables import DataStagingCols
 from crawler.crawler_base import CrawlerBase
 from crawler.data_extractors.extractor_otodom import DataExtractorOTODOM
 
@@ -22,15 +23,24 @@ class CrawlerOTODOM(CrawlerBase):
         self.click_button_with_text(text='Akceptuję')
 
     def get_next_page_arrow(self) -> WebElement:
-        return self._find_element(By.XPATH, "//button[@data-cy='pagination.next-page']")
+        button = self._find_element(By.XPATH, "//button[@data-cy='pagination.next-page']")
+        if button.get_attribute('disabled'):
+            button = None
+
+        return button
 
     def get_offer_urls(self, already_scraped_urls: List[str]) -> Union[List[str], bool]:
-        offers = self.driver.find_elements(By.XPATH, "//a[@class='css-cl00hf e1o4jl73']")
+        offers = self.driver.find_elements(By.XPATH, "//a[@data-cy='listing-item-link']")
         if not self.check_if_offers_loaded_properly(offers):
             return False
 
-        offer_urls = [offer.get_property('href') for offer in offers
-                      if offer.get_property('href') not in already_scraped_urls]
+        offer_urls = []
+        for offer in offers:
+            href = offer.get_property('href')
+            if href in self.main_scraped_urls:
+                self.seen_records_from_db[DataStagingCols.URL].append(href)
+                continue
+            offer_urls.append(href)
 
         return offer_urls
 
