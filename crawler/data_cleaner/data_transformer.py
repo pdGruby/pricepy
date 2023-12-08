@@ -38,8 +38,10 @@ class DataTransformer:
         return data
 
     def _preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        data = data.applymap(lambda value: value.lower().strip() if isinstance(value, str) else value)
         data = data.drop_duplicates(DataStagingCols.URL, keep='last')
+        data = data.applymap(lambda value: value.lower().strip()
+                             if isinstance(value, str) and ('http' not in value or 'www' not in value)
+                             else value)
 
         # When a given information is missing, but it is not stored as NA, then convert the information to NA
         no_info_columns = [DataStagingCols.FLOOR, DataStagingCols.STATUS, DataStagingCols.PROPERTY_TYPE,
