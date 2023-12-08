@@ -1,3 +1,4 @@
+from datetime import datetime
 import random
 import string
 import pandas as pd
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
 from _common.database_communicator.tables import DataMain, DataMainCols, DataStaging
+from crawler.common.create_run_id import create_run_id
 
 
 class DataSaver:
@@ -65,6 +67,9 @@ class DataSaver:
     def _update_columns(self, data: pd.DataFrame) -> None:
         urls_to_update = data[DataMainCols.URL]
 
-        update_query = update(DataMain).where(DataMain.url.in_(urls_to_update))
+        update_query = update(DataMain).where(DataMain.url.in_(urls_to_update)).values({
+            DataMainCols.INSERT_DATE: datetime.today(),
+            DataMainCols.RUN_ID: create_run_id(self.flow_name)
+        })
         self.session.execute(update_query)
         self.session.commit()
