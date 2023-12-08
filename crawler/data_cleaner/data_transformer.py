@@ -99,6 +99,9 @@ class DataTransformer:
 
     @staticmethod
     def extract_location(value: Union[str, None]) -> Union[str, None]:
+        if value is None:
+            return None
+
         matched_locs = [loc for loc in LOCATION_LIST if loc.lower() in value]
         if matched_locs:
             return matched_locs[0]

@@ -1,4 +1,4 @@
-import prefect
+from prefect.context import FlowRunContext
 from prefect import flow, task
 
 from crawler.crawler_otodom import CrawlerOTODOM
@@ -33,10 +33,12 @@ def scrape_olx_data():
 @task(name='clean_data', log_prints=True)
 def clean_data():
     try:
-        print(f'{prefect.context.get_run_context().flow_run.dict()}')
-        flow_name = prefect.context.get_run_context().flow_run.dict().get('name')
-    except:
-        flow_name = 'angry-hawk'
+        print(f'{FlowRunContext.get().flow_run.dict()}')
+        flow_name = FlowRunContext.get().flow_run.dict().get('name')
+    except Exception as e:
+        print(e)
+        flow_name = 'angry-eagle'
+
     print(f'The flow name is: {flow_name}')
     cleaner = DataCleaner(flow_name=flow_name)
     cleaner.clean_and_save_data()
