@@ -43,6 +43,10 @@ class DataTransformer:
                              if isinstance(value, str) and ('http' not in value or 'www' not in value)
                              else value)
 
+        # These are the offers that do not exist anymore, but for some reason they are still present in the OLX browser
+        price_mask = data[DataStagingCols.PRICE].apply(lambda x: False if 'nie istnieje' in str(x) else True)
+        data = data.loc[price_mask, :]
+
         # When a given information is missing, but it is not stored as NA, then convert the information to NA
         no_info_columns = [DataStagingCols.FLOOR, DataStagingCols.STATUS, DataStagingCols.PROPERTY_TYPE,
                            DataStagingCols.YEAR_BUILT, DataStagingCols.PROPERTY_CONDITION, DataStagingCols.ROOMS]
