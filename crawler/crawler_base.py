@@ -105,8 +105,10 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
         main_scraped_urls = session.query(DataMain.url).where(DataMain.last_time_seen > cut_date).all()
         session.close()
 
-        if not staging_scraped_urls and not main_scraped_urls:
-            return []
+        if not staging_scraped_urls:
+            staging_scraped_urls = []
+        if not main_scraped_urls:
+            main_scraped_urls = []
 
         staging_scraped_urls = [url[0] for url in staging_scraped_urls]
         main_scraped_urls = [url[0] for url in main_scraped_urls]
