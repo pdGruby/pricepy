@@ -6,7 +6,6 @@ from selenium.webdriver.remote.webelement import WebElement
 from _common.database_communicator.tables import DataStagingCols
 from crawler.crawler_base import CrawlerBase
 from crawler.data_extractors.extractor_olx import DataExtractorOLX
-from crawler.data_extractors.extractor_otodom import DataExtractorOTODOM
 
 
 class CrawlerOLX(CrawlerBase):
@@ -32,7 +31,10 @@ class CrawlerOLX(CrawlerBase):
         offer_urls = []
         for offer in offers:
             href = offer.get_property('href')
+            href = href.replace('.html', '')
 
+            if 'otodom' in href:
+                continue
             if href in self.main_scraped_urls:
                 self.seen_records_from_db[DataStagingCols.URL].append(href)
                 continue
@@ -46,8 +48,6 @@ class CrawlerOLX(CrawlerBase):
     def extract_data_from_offer(self, offer_url: str) -> None:
         if 'olx' in offer_url:
             extractor = DataExtractorOLX(self.driver, self.scraped_records, page_to_extract_url=offer_url)
-        elif 'otodom' in offer_url:
-            extractor = DataExtractorOTODOM(self.driver, self.scraped_records, page_to_extract_url=offer_url)
         else:
             raise ValueError(f"Unknown domain for data extraction: {offer_url}")
 

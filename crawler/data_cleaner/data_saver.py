@@ -1,14 +1,12 @@
 import random
 import string
 import pandas as pd
-from datetime import datetime
 from sqlalchemy import update
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
 from _common.database_communicator.tables import DataMain, DataMainCols, DataStaging
-from crawler.common.create_run_id import create_run_id
 
 
 class DataSaver:

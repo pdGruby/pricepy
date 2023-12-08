@@ -37,6 +37,7 @@ class CrawlerOTODOM(CrawlerBase):
         offer_urls = []
         for offer in offers:
             href = offer.get_property('href')
+            href = href.replace('.html', '')
 
             if href in self.main_scraped_urls:
                 self.seen_records_from_db[DataStagingCols.URL].append(href)
