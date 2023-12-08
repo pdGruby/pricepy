@@ -32,12 +32,7 @@ def scrape_olx_data():
 
 @task(name='clean_data', log_prints=True)
 def clean_data():
-    try:
-        print(f'{FlowRunContext.get().flow_run.dict()}')
-        flow_name = FlowRunContext.get().flow_run.dict().get('name')
-    except Exception as e:
-        print(e)
-        flow_name = 'angry-eagle'
+    flow_name = FlowRunContext.get().flow_run.dict().get('name')
 
     print(f'The flow name is: {flow_name}')
     cleaner = DataCleaner(flow_name=flow_name)
