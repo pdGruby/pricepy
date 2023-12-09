@@ -1,3 +1,4 @@
+from numpy import mean, median
 from _common.misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL, CATEGORICAL_FEATS, NUMERIC_FEATS
 from _common.database_communicator.db_connector import DBConnector
 import pandas as pd
@@ -11,7 +12,7 @@ class DataPreprocessor(DBConnector):
         super().__init__()
         engine = self.create_sql_engine()
 
-        self.df = pd.read_sql_query("SELECT * FROM data_staging", con=engine)
+        self.df = pd.read_sql_query("SELECT * FROM data_main", con=engine)
 
     def _handle_missing_and_duplicated_values(self):
         """Handle missing and duplicated values in the dataset"""
@@ -29,13 +30,6 @@ class DataPreprocessor(DBConnector):
 
     def _process_price(self, filter_price: float = 0.0):
         """Process price column and filter out prices higher than filter_price"""
-        self.df["price"] = (
-            self.df["price"]
-            .str.replace("zł", "")
-            .str.replace(" ", "")
-            .replace(",", ".", regex=True)
-            .replace("Zapytajocenę", None, regex=True)
-        )
 
         mask = pd.to_numeric(self.df["price"], errors="coerce").notna()
         self.df = self.df[mask]
@@ -48,58 +42,11 @@ class DataPreprocessor(DBConnector):
 
     def _process_size(self, filter_size: float = 0.0):
         """Process size column"""
-        self.df["size"] = self.df["size"].str.replace(",", ".").astype(float)
+        
+        self.df['size'] = self.df['size'].fillna(self.df['size'].median())
         
         if filter_size > 0.0:
             self.df = self.df[self.df["size"] < filter_size]
-
-    def _process_location(self):
-        """Process location column"""
-
-        self.df["location"] = self.df["location"].apply(
-            lambda x: next(
-                (loc for loc in LOCATION_LIST if bool(re.search(loc, x))), "Poznań"
-            )
-        )
-
-    def _process_floor(self):
-        """Process floor column"""
-
-        self.df["floor"] = self.df["floor"].apply(
-            lambda x: x.split("/")[0] if type(x) == str else x
-        )
-
-        def extract_numbers(s):
-            return "".join(filter(str.isdigit, s)) if any(map(str.isdigit, s)) else s
-
-        self.df["floor"] = (
-            self.df["floor"]
-            .str.replace("parter", "0")
-            .str.replace("poddasze", "10")
-            .apply(extract_numbers)
-        )
-        self.df["floor"] = (
-            self.df["floor"]
-            .str.replace("zapytaj", "brak informacji")
-            .str.replace("suterena", "-1")
-        )
-
-    def _process_property_type(self):
-        """Process property_type column"""
-
-        self.df["property_type"] = (
-            self.df["property_type"]
-            .str.replace("plomba", "pozostałe")
-            .str.replace("bliźniak", "wolnostojący")
-            .str.replace("dom wolnostojący", "wolnostojący")
-        )
-
-    def _process_property_condition(self):
-        """Process property_condition column"""
-
-        self.df["property_condition"] = self.df["property_condition"].str.replace(
-            "zapytaj", "brak informacji"
-        )
 
     def _cast_types(self):
         numerical_col = NUMERIC_FEATS
@@ -132,12 +79,7 @@ class DataPreprocessor(DBConnector):
         """Run preprocessing pipeline"""
 
         self._process_price(filter_price=17500000.0)
-        self._handle_missing_and_duplicated_values()
         self._process_size(filter_size=3000.0)
-        self._process_location()
-        self._process_floor()
-        self._process_property_type()
-        self._process_property_condition()
         self._cast_types()
         self._select_features()
 
