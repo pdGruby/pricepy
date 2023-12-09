@@ -80,16 +80,17 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
         for key in self.seen_records_from_db.keys():
             if key == DataStagingCols.URL:
                 continue
-            self.seen_records_from_db[key] += [None] * hm_seen_records
+            self.seen_records_from_db[key] = [None] * hm_seen_records
 
         seen_records = pd.DataFrame(self.seen_records_from_db)
-        seen_records.to_sql(DataStaging.__tablename__, con=sql_engine, if_exists='append', index=False)
+        if not seen_records.empty:
+            seen_records.to_sql(DataStaging.__tablename__, con=sql_engine, if_exists='append', index=False)
 
         for key in self.scraped_records.keys():
             self.scraped_records[key].clear()
 
         for key in self.seen_records_from_db.keys():
-            self.scraped_records[key].clear()
+            self.seen_records_from_db[key].clear()
 
     def check_if_save_threshold_reached(self) -> None:
         if len(self.scraped_records['url']) == self.DB_SAVE_THRESHOLD:
@@ -105,8 +106,10 @@ class CrawlerBase(WebdriverCreator, DBConnector, SeleniumCommonMethods, ABC):
         main_scraped_urls = session.query(DataMain.url).where(DataMain.last_time_seen > cut_date).all()
         session.close()
 
-        if not staging_scraped_urls and not main_scraped_urls:
-            return []
+        if not staging_scraped_urls:
+            staging_scraped_urls = []
+        if not main_scraped_urls:
+            main_scraped_urls = []
 
         staging_scraped_urls = [url[0] for url in staging_scraped_urls]
         main_scraped_urls = [url[0] for url in main_scraped_urls]
