@@ -31,7 +31,6 @@ class CrawlerOLX(CrawlerBase):
         offer_urls = []
         for offer in offers:
             href = offer.get_property('href')
-            href = href.replace('.html', '')
 
             if 'otodom' in href:
                 continue
