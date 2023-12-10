@@ -1,5 +1,11 @@
 from numpy import mean, median
-from _common.misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL, CATEGORICAL_FEATS, NUMERIC_FEATS
+from _common.misc.variables import (
+    LOCATION_LIST,
+    FEAT_COLS,
+    TARGET_COL,
+    CATEGORICAL_FEATS,
+    NUMERIC_FEATS,
+)
 from _common.database_communicator.db_connector import DBConnector
 import pandas as pd
 import re
@@ -7,12 +13,16 @@ from sklearn.model_selection import train_test_split
 
 
 class DataPreprocessor(DBConnector):
-    def __init__(self) -> None:
+    def __init__(self, main: bool = True) -> None:
         """Initialize DataPreprocessor class and load data from database"""
         super().__init__()
         engine = self.create_sql_engine()
 
-        self.df = pd.read_sql_query("SELECT * FROM data_main", con=engine)
+        self.df = (
+            pd.read_sql_query("SELECT * FROM data_main", con=engine)
+            if main
+            else pd.read_sql_query("SELECT * FROM data_staging", con=engine)
+        )
 
     def _handle_missing_and_duplicated_values(self):
         """Handle missing and duplicated values in the dataset"""
@@ -35,16 +45,15 @@ class DataPreprocessor(DBConnector):
         self.df = self.df[mask]
 
         self.df["price"] = self.df["price"].astype(float)
-        
+
         if filter_price > 0.0:
             self.df = self.df[self.df["price"] < filter_price]
 
-
     def _process_size(self, filter_size: float = 0.0):
         """Process size column"""
-        
-        self.df['size'] = self.df['size'].fillna(self.df['size'].median())
-        
+
+        self.df["size"] = self.df["size"].fillna(self.df["size"].median())
+
         if filter_size > 0.0:
             self.df = self.df[self.df["size"] < filter_size]
 
@@ -67,24 +76,25 @@ class DataPreprocessor(DBConnector):
             df[col] = df[col].astype(float)
 
         for col in categorical_col:
-            df[col] = df[col].astype("category") 
-        
+            df[col] = df[col].astype("category")
+
         return df
 
     def _select_features(self):
         """Select features to be used in the model"""
         self.df = self.df[FEAT_COLS + [TARGET_COL]]
 
-    def run_preprocessing_pipeline(self):
+    def run_preprocessing_pipeline(self, cast_types: bool = True):
         """Run preprocessing pipeline"""
 
         self._process_price(filter_price=17500000.0)
         self._process_size(filter_size=3000.0)
-        self._cast_types()
+        if cast_types:
+            self._cast_types()
         self._select_features()
 
     def train_test_split(
-        self
+        self,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Split data into train and test set
 

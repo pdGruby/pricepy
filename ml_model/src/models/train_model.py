@@ -359,7 +359,7 @@ if __name__ == "__main__":
         "property_condition": ["do_wykonczenia"],
         "location": ["Stare Miasto"],
     }
-    print(infer_model("xgboost_regressor.pkl", data_to_infer)) 
+    print(infer_model("xgboost_regressor.pkl", data_to_infer))
 
     # print('-'*50)
     # print('LightGBM Regressor')
