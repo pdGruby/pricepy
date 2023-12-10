@@ -14,14 +14,26 @@ LOCATION_LIST = [
     "Wilda",
     "Dębiec",
     "Łacina",
-    "Starołęka Mała",
+    "Starołęka",
     "Naramowice",
     "Piątkowo",
     "Winogrady",
     "Chartowo",
     "Rataje",
+    "Antoninek",
+    "Ogrody",
     "Stare Miasto",
-    "Nowe Miasto"
+    "Nowe Miasto",
+    "Szczytniki",
+    "Komorniki",
+    "Tarnowo Podgórne",
+    "Skórzewo",
+    "Szczepankowo",
+    "Swarzędz",
+    "Luboń",
+    "Mosina",
+    "Suchy Las",
+    "Rokietnica"
 ]
 
 FEAT_COLS = [
