@@ -38,8 +38,14 @@ class DataTransformer:
         return data
 
     def _preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        data = data.applymap(lambda value: value.lower().strip() if isinstance(value, str) else value)
         data = data.drop_duplicates(DataStagingCols.URL, keep='last')
+        data = data.applymap(lambda value: value.lower().strip()
+                             if isinstance(value, str) and 'http' not in value and 'www' not in value
+                             else value)
+
+        # These are the offers that do not exist anymore, but for some reason they are still present in the OLX browser
+        price_mask = data[DataStagingCols.PRICE].apply(lambda x: False if 'nie istnieje' in str(x) else True)
+        data = data.loc[price_mask, :]
 
         # When a given information is missing, but it is not stored as NA, then convert the information to NA
         no_info_columns = [DataStagingCols.FLOOR, DataStagingCols.STATUS, DataStagingCols.PROPERTY_TYPE,
@@ -99,6 +105,9 @@ class DataTransformer:
 
     @staticmethod
     def extract_location(value: Union[str, None]) -> Union[str, None]:
+        if value is None:
+            return None
+
         matched_locs = [loc for loc in LOCATION_LIST if loc.lower() in value]
         if matched_locs:
             return matched_locs[0]

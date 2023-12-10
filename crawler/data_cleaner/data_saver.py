@@ -1,8 +1,8 @@
+from datetime import datetime
 import random
 import string
 import pandas as pd
-from datetime import datetime
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import update
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
@@ -65,14 +65,11 @@ class DataSaver:
         return already_in_db, not_in_db
 
     def _update_columns(self, data: pd.DataFrame) -> None:
-        data = data.to_dict(orient='records').copy()
+        urls_to_update = data[DataMainCols.URL]
 
-        query = insert(DataMain).values(data)
-        query = query.on_conflict_do_update(
-            index_elements=[DataMainCols.URL],
-            set_={DataMainCols.LAST_TIME_SEEN: datetime.today(),
-                  DataMainCols.RUN_ID: create_run_id(self.flow_name)}
-        )
-
-        self.conn.execute(query)
-        self.conn.commit()  # noqa
+        update_query = update(DataMain).where(DataMain.url.in_(urls_to_update)).values({
+            DataMainCols.INSERT_DATE: datetime.today(),
+            DataMainCols.RUN_ID: create_run_id(self.flow_name)
+        })
+        self.session.execute(update_query)
+        self.session.commit()

@@ -3,9 +3,9 @@ from typing import List, Union
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
+from _common.database_communicator.tables import DataStagingCols
 from crawler.crawler_base import CrawlerBase
 from crawler.data_extractors.extractor_olx import DataExtractorOLX
-from crawler.data_extractors.extractor_otodom import DataExtractorOTODOM
 
 
 class CrawlerOLX(CrawlerBase):
@@ -28,16 +28,25 @@ class CrawlerOLX(CrawlerBase):
         if not self.check_if_offers_loaded_properly(offers):
             return False
 
-        offer_urls = [offer.get_property('href') for offer in offers
-                      if offer.get_property('href') not in already_scraped_urls]
+        offer_urls = []
+        for offer in offers:
+            href = offer.get_property('href')
+
+            if 'otodom' in href:
+                continue
+            if href in self.main_scraped_urls:
+                self.seen_records_from_db[DataStagingCols.URL].append(href)
+                continue
+            if href in already_scraped_urls:
+                continue
+
+            offer_urls.append(href)
 
         return offer_urls
 
     def extract_data_from_offer(self, offer_url: str) -> None:
         if 'olx' in offer_url:
             extractor = DataExtractorOLX(self.driver, self.scraped_records, page_to_extract_url=offer_url)
-        elif 'otodom' in offer_url:
-            extractor = DataExtractorOTODOM(self.driver, self.scraped_records, page_to_extract_url=offer_url)
         else:
             raise ValueError(f"Unknown domain for data extraction: {offer_url}")
 

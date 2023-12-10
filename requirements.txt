@@ -8,3 +8,6 @@ xgboost~=2.0.2
 streamlit~=1.28.2
 requests~=2.31.0
 pillow~=10.1.0
+python-dateutil~=2.8.2
+python-dateutil~=2.8.2
+numpy~=1.26.2

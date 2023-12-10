@@ -33,7 +33,7 @@ class DBConnector:
             port=self.db_port, database=self.db_name
         )
 
-        return create_engine(url_object, poolclass=NullPool)
+        return create_engine(url_object, poolclass=NullPool, future=True)
 
     def create_session(self) -> Session:
         my_session = sessionmaker(bind=self.create_sql_engine())
