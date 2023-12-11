@@ -21,7 +21,7 @@ LOCATION_LIST = [
     "Chartowo",
     "Rataje",
     "Stare Miasto",
-    "Nowe Miasto"
+    "Nowe Miasto",
 ]
 
 FEAT_COLS = [
@@ -38,19 +38,28 @@ FEAT_COLS = [
 CATEGORICAL_FEATS = [
     DataMainCols.STATUS,
     DataMainCols.PROPERTY_TYPE,
-    DataMainCols.FLOOR,
-    DataMainCols.YEAR_BUILT,
     DataMainCols.PROPERTY_CONDITION,
     DataMainCols.LOCATION,
 ]
 
-NUMERIC_FEATS = [DataMainCols.SIZE, DataMainCols.ROOMS]
+NUMERIC_FEATS = [
+    DataMainCols.SIZE,
+    DataMainCols.ROOMS,
+    DataMainCols.FLOOR,
+    DataMainCols.YEAR_BUILT,
+]
 
 TARGET_COL = DataMainCols.PRICE
 
-PROPERTY_CONDITION_LIST = ['do remontu', 'do wykończenia', 'do zamieszkania']
+PROPERTY_CONDITION_LIST = ["do remontu", "do wykończenia", "do zamieszkania"]
 
-STATUS_LIST = ['wtórny', 'pierwotny']
+STATUS_LIST = ["wtórny", "pierwotny"]
 
-PROPERTY_TYPE_LIST = ['kamienica', 'blok', 'apartamentowiec', 'dom wolnostojący', 'bliźniak', 'szeregowiec']
-
+PROPERTY_TYPE_LIST = [
+    "kamienica",
+    "blok",
+    "apartamentowiec",
+    "dom wolnostojący",
+    "bliźniak",
+    "szeregowiec",
+]

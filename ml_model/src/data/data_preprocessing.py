@@ -1,4 +1,3 @@
-from numpy import mean, median
 from _common.misc.variables import (
     LOCATION_LIST,
     FEAT_COLS,
@@ -8,8 +7,8 @@ from _common.misc.variables import (
 )
 from _common.database_communicator.db_connector import DBConnector
 import pandas as pd
-import re
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 
 class DataPreprocessor(DBConnector):
@@ -52,10 +51,16 @@ class DataPreprocessor(DBConnector):
     def _process_size(self, filter_size: float = 0.0):
         """Process size column"""
 
-        self.df["size"] = self.df["size"].fillna(self.df["size"].median())
+        # self.df["size"] = self.df["size"].fillna(self.df["size"].median())
 
         if filter_size > 0.0:
             self.df = self.df[self.df["size"] < filter_size]
+
+    def _process_floor(self, filter_floor: float = 0.0):
+        """Process floor column"""
+
+        if filter_floor > 0.0:
+            self.df = self.df[self.df["floor"] < filter_floor]
 
     def _cast_types(self):
         numerical_col = NUMERIC_FEATS
@@ -84,13 +89,23 @@ class DataPreprocessor(DBConnector):
         """Select features to be used in the model"""
         self.df = self.df[FEAT_COLS + [TARGET_COL]]
 
-    def run_preprocessing_pipeline(self, cast_types: bool = True):
+    def _standardize(self):
+        """Standardize numerical features"""
+        scaler = StandardScaler()
+        self.df[NUMERIC_FEATS] = scaler.fit_transform(self.df[NUMERIC_FEATS])
+
+    def run_preprocessing_pipeline(
+        self, cast_types: bool = True, standardize: bool = True
+    ):
         """Run preprocessing pipeline"""
 
-        self._process_price(filter_price=17500000.0)
-        self._process_size(filter_size=3000.0)
         if cast_types:
             self._cast_types()
+        self._process_price(filter_price=17500000.0)
+        self._process_size(filter_size=1000.0)
+        self._process_floor(filter_floor=30.0)
+        if standardize:
+            self._standardize()
         self._select_features()
 
     def train_test_split(
