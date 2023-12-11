@@ -11,7 +11,7 @@ from _common.database_communicator.tables import DataMainCols, DataStagingCols
 class DataTransformer:
     data: pd.DataFrame
 
-    def transform_data(self, data):
+    def transform_data(self, data: pd.DataFrame) -> pd.DataFrame:
         data = self._preprocess_data(data)
 
         data = self.process_column(data, DataStagingCols.PRICE, extractor_func=self.extract_currency,
