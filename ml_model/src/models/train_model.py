@@ -1,18 +1,13 @@
-from ml_model.src.data.data_preprocessing import DataPreprocessor
+import pickle
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from xgboost import XGBRegressor
-from catboost import CatBoostRegressor
-from sklearn.model_selection import RandomizedSearchCV
-from lightgbm import LGBMRegressor
-from sklearn.linear_model import LinearRegression
-import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from _common.misc.variables import CATEGORICAL_FEATS, NUMERIC_FEATS
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-import pickle
+from sklearn.model_selection import RandomizedSearchCV
+from xgboost import XGBRegressor
+
+from ml_model.src.data.data_preprocessing import DataPreprocessor
 
 
 class XGBoostRegressor(XGBRegressor):
@@ -94,13 +89,13 @@ class XGBoostRegressor(XGBRegressor):
         r2 = r2_score(y_test, preds)
         print("R2:", r2)
 
-    def save_model(self, filename):
-        with open(filename, "wb") as file:
+    def save_model(self, fname):
+        with open(fname, "wb") as file:
             pickle.dump(self, file)
 
     @staticmethod
-    def load_model(filename):
-        with open(filename, "rb") as file:
+    def load_model(fname="xgboost_regressor.pkl"):
+        with open(fname, "rb") as file:
             return pickle.load(file)
 
 

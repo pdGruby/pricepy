@@ -1,14 +1,14 @@
-from _common.misc.variables import (
-    LOCATION_LIST,
-    FEAT_COLS,
-    TARGET_COL,
-    CATEGORICAL_FEATS,
-    NUMERIC_FEATS,
-)
-from _common.database_communicator.db_connector import DBConnector
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+
+from _common.database_communicator.db_connector import DBConnector
+from _common.misc.variables import (
+    CATEGORICAL_FEATS,
+    FEAT_COLS,
+    NUMERIC_FEATS,
+    TARGET_COL,
+)
 
 
 class DataPreprocessor(DBConnector):
