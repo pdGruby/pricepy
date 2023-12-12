@@ -35,9 +35,33 @@ class XGBoostRegressor(XGBRegressor):
         super().__init__(**kwargs)
         self.enable_categorical = enable_categorical
 
-    def random_search_cv(
-        self, X_train, y_train, n_iter=150, cv=5, n_jobs=8, verbose=2, random_state=40
-    ):
+    def load_data(self, X_train, X_test, y_train, y_test):
+        """Load data
+
+        Args:
+            X_train (pd.DataFrame): Train features
+            y_train (pd.Series): Train target
+            X_test (pd.DataFrame): Test features
+            y_test (pd.Series): Test target
+        """
+
+        self.X_train = X_train
+        self.X_test = X_test
+
+        self.y_train = y_train
+        self.y_test = y_test
+
+    def random_search_cv(self, n_iter=150, cv=5, n_jobs=8, verbose=2, random_state=40):
+        """RandomizedSearchCV for hyperparameter tuning
+
+        Args:
+            n_iter (int, optional): Number of iterations
+            cv (int, optional): Number of cross-validation folds
+            n_jobs (int, optional): Number of jobs
+            verbose (int, optional): Verbosity
+            random_state (int, optional): Random state
+        """
+
         random_cv = RandomizedSearchCV(
             estimator=self,
             param_distributions=self.param_grid,
@@ -49,11 +73,17 @@ class XGBoostRegressor(XGBRegressor):
             return_train_score=True,
             random_state=random_state,
         )
-        random_cv.fit(X_train, y_train)
+        random_cv.fit(self.X_train, self.y_train)
 
         self.best_params_ = random_cv.best_params_
 
-    def train(self, X_train, y_train, X_test, y_test, **kwargs):
+    def train(self, **kwargs):
+        """Train the model
+
+        Args:
+            **kwargs: Keyword arguments for XGBRegressor.fit()
+        """
+
         self.set_params(
             **self.best_params_,
             eval_metric="rmse",
@@ -61,13 +91,14 @@ class XGBoostRegressor(XGBRegressor):
             enable_categorical=self.enable_categorical,
             n_jobs=8,
         )
-        eval_set = [(X_train, y_train), (X_test, y_test)]
-        self.fit(X_train, y_train, eval_set=eval_set, **kwargs)
+        eval_set = [(self.X_train, self.y_train), (self.X_test, self.y_test)]
+        self.fit(self.X_train, self.y_train, eval_set=eval_set, **kwargs)
 
         self.results = self.evals_result()
 
     def plot_learning_curves(self):
-        # plot learning curves
+        """Plot train and test RMSE scores"""
+
         plt.plot(self.results["validation_0"]["rmse"], label="train")
         plt.plot(self.results["validation_1"]["rmse"], label="test")
         plt.xlabel("Steps")
@@ -76,42 +107,80 @@ class XGBoostRegressor(XGBRegressor):
         plt.legend()
         plt.show()
 
-    def evaluate(self, X_test, y_test):
-        preds = self.predict(X_test)
+    def evaluate(self, verbose=True):
+        """Evaluate the model
 
-        # Evaluate the model
-        mae_score = mean_absolute_error(y_test, preds)
-        print("MAE:", mae_score)
+        Args:
+            verbose (bool, optional): Whether to print scores. Defaults to True.
 
-        rmse_score = np.sqrt(mean_squared_error(y_test, preds))
-        print("RMSE:", rmse_score)
+        Returns:
+            tuple[float, float, float]: MAE, RMSE and R2 scores
+        """
 
-        r2 = r2_score(y_test, preds)
-        print("R2:", r2)
+        preds = self.predict(self.X_test)
+
+        mae_score = mean_absolute_error(self.y_test, preds)
+        rmse_score = np.sqrt(mean_squared_error(self.y_test, preds))
+        r2 = r2_score(self.y_test, preds)
+
+        if verbose:
+            print("MAE:", mae_score)
+            print("RMSE:", rmse_score)
+            print("R2:", r2)
+
+        return mae_score, rmse_score, r2
+
+    def run_training_pipeline(self, save_pkl=False, **kwargs):
+        """Run training pipeline
+
+        Args:
+            **kwargs: Keyword arguments for random_search_cv()
+        """
+
+        self.random_search_cv(**kwargs)
+        self.train()
+        if save_pkl:
+            self.save_model("xgboost_regressor.pkl")
 
     def save_model(self, fname):
+        """Save model to a file using pickle
+
+        Args:
+            fname (str): File name
+        """
+
         with open(fname, "wb") as file:
             pickle.dump(self, file)
 
     @staticmethod
     def load_model(fname="xgboost_regressor.pkl"):
+        """Load model from a file using pickle
+
+        Args:
+            fname (str, optional): File name. Defaults to "xgboost_regressor.pkl".
+
+        Returns:
+            XGBoostRegressor: XGBoostRegressor model
+        """
+
         with open(fname, "rb") as file:
             return pickle.load(file)
 
+    @staticmethod
+    def infer_model(model_path: str, data: pd.DataFrame) -> float:
+        """This function is used to infer model on new data.
 
-def infer_model(model_path: str, data: pd.DataFrame) -> float:
-    """This function is used to infer model on new data.
+        Args:
+            model_path (str): Model path
+            data (pd.DataFrame): Data to be infered as a DataFrame.
 
-    Args:
-        model_path (str): Model path
-        data (pd.DataFrame): Data to be infered as a DataFrame.
+        Returns:
+            float: Predicted price
+        """
 
-    Returns:
-        float: Predicted price
-    """
-    model = XGBoostRegressor.load_model(model_path)
-    data = DataPreprocessor.static_cast_types(data)
-    return model.predict(data)[0]
+        model = XGBoostRegressor.load_model(model_path)
+        data = DataPreprocessor.static_cast_types(data)
+        return model.predict(data)[0]
 
 
 if __name__ == "__main__":
@@ -120,13 +189,10 @@ if __name__ == "__main__":
     preprocessor.run_preprocessing_pipeline()
     X_train, X_test, y_train, y_test = preprocessor.train_test_split()
 
-    print("-" * 50)
-    print("XGBoost Regressor")
     xgb_regressor = XGBoostRegressor()
-    xgb_regressor.random_search_cv(
-        X_train, y_train, n_iter=200, random_state=30, verbose=2
-    )
-    xgb_regressor.train(X_train, y_train, X_test, y_test, verbose=False)
+    xgb_regressor.load_data(X_train, y_train, X_test, y_test)
+    xgb_regressor.run_training_pipeline(n_iter=10, random_state=30, verbose=2)
+    # xgb_regressor.random_search_cv(n_iter=10, random_state=30, verbose=2)
+    # xgb_regressor.train(verbose=False)
     xgb_regressor.plot_learning_curves()
-    xgb_regressor.evaluate(X_test, y_test)
-    xgb_regressor.save_model("xgboost_regressor.pkl")
+    xgb_regressor.evaluate()
