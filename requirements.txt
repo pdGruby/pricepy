@@ -11,3 +11,4 @@ pillow~=10.1.0
 python-dateutil~=2.8.2
 python-dateutil~=2.8.2
 numpy~=1.26.2
+pytz~=2023.3.post1
