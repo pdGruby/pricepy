@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from _common.database_communicator.db_connector import DBConnector
+from _common.database_communicator.tables import DataMainCols
 from _common.misc.variables import (
     CATEGORICAL_FEATS,
     FEAT_COLS,
@@ -23,30 +24,16 @@ class DataPreprocessor(DBConnector):
             else pd.read_sql_query("SELECT * FROM data_staging", con=engine)
         )
 
-    def _handle_missing_and_duplicated_values(self):
-        """Handle missing and duplicated values in the dataset"""
-        self.df["floor"].fillna("brak informacji", inplace=True)
-        self.df["status"].fillna("brak informacji", inplace=True)
-        self.df["property_type"].fillna("brak informacji", inplace=True)
-        self.df["rooms"].fillna(1, inplace=True)
-        self.df["year_built"].fillna("brak informacji", inplace=True)
-        self.df["property_condition"].fillna("brak informacji", inplace=True)
-
-        self.df.drop_duplicates(inplace=True)
-
-        self.df = self.df[self.df["price"].notna()]
-        self.df = self.df[self.df["size"].notna()]
-
     def _process_price(self, filter_price: float = 0.0):
         """Process price column and filter out prices higher than filter_price"""
 
-        mask = pd.to_numeric(self.df["price"], errors="coerce").notna()
+        mask = pd.to_numeric(self.df[DataMainCols.PRICE], errors="coerce").notna()
         self.df = self.df[mask]
 
-        self.df["price"] = self.df["price"].astype(float)
+        self.df[DataMainCols.PRICE] = self.df[DataMainCols.PRICE].astype(float)
 
         if filter_price > 0.0:
-            self.df = self.df[self.df["price"] < filter_price]
+            self.df = self.df[self.df[DataMainCols.PRICE] < filter_price]
 
     def _process_size(self, filter_size: float = 0.0):
         """Process size column"""
@@ -54,13 +41,13 @@ class DataPreprocessor(DBConnector):
         # self.df["size"] = self.df["size"].fillna(self.df["size"].median())
 
         if filter_size > 0.0:
-            self.df = self.df[self.df["size"] < filter_size]
+            self.df = self.df[self.df[DataMainCols.SIZE] < filter_size]
 
     def _process_floor(self, filter_floor: float = 0.0):
         """Process floor column"""
 
         if filter_floor > 0.0:
-            self.df = self.df[self.df["floor"] < filter_floor]
+            self.df = self.df[self.df[DataMainCols.FLOOR] < filter_floor]
 
     def _cast_types(self):
         numerical_col = NUMERIC_FEATS

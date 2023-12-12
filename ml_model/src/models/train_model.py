@@ -124,21 +124,9 @@ if __name__ == "__main__":
     print("XGBoost Regressor")
     xgb_regressor = XGBoostRegressor()
     xgb_regressor.random_search_cv(
-        X_train, y_train, n_iter=500, random_state=30, verbose=2
+        X_train, y_train, n_iter=200, random_state=30, verbose=2
     )
     xgb_regressor.train(X_train, y_train, X_test, y_test, verbose=False)
     xgb_regressor.plot_learning_curves()
     xgb_regressor.evaluate(X_test, y_test)
     xgb_regressor.save_model("xgboost_regressor.pkl")
-
-    data_to_infer = {
-        "status": ["pierwotny"],
-        "size": [100.0],
-        "property_type": ["kamienica"],
-        "rooms": [1.0],
-        "floor": ["2"],
-        "year_built": ["2024"],
-        "property_condition": ["do_wykonczenia"],
-        "location": ["Stare Miasto"],
-    }
-    print(infer_model("xgboost_regressor.pkl", data_to_infer))
