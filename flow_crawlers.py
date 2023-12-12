@@ -4,6 +4,7 @@ from prefect import flow, task
 from crawler.crawler_otodom import CrawlerOTODOM
 from crawler.crawler_olx import CrawlerOLX
 from crawler.data_cleaner.data_cleaner import DataCleaner
+from _common.email_sender.flow_finished_template import send_finish_message
 
 
 @task(name='scrape_otodom_data', log_prints=True)
@@ -39,7 +40,10 @@ def clean_data():
     cleaner.clean_and_save_data()
 
 
-@flow(name='run_crawlers', retries=3, log_prints=True)
+@flow(
+    name='run_crawlers', retries=3, log_prints=True,
+    on_completion=[send_finish_message], on_failure=[send_finish_message]
+)
 def run_crawlers():
     scrape_olx_data()
     scrape_otodom_data()
