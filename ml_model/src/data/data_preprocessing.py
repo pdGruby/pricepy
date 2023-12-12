@@ -1,105 +1,53 @@
-from _common.misc.variables import LOCATION_LIST, FEAT_COLS, TARGET_COL, CATEGORICAL_FEATS, NUMERIC_FEATS
-from _common.database_communicator.db_connector import DBConnector
 import pandas as pd
-import re
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+from _common.database_communicator.db_connector import DBConnector
+from _common.database_communicator.tables import DataMainCols
+from _common.misc.variables import (
+    CATEGORICAL_FEATS,
+    FEAT_COLS,
+    NUMERIC_FEATS,
+    TARGET_COL,
+)
 
 
 class DataPreprocessor(DBConnector):
-    def __init__(self) -> None:
+    def __init__(self, main: bool = True) -> None:
         """Initialize DataPreprocessor class and load data from database"""
         super().__init__()
         engine = self.create_sql_engine()
 
-        self.df = pd.read_sql_query("SELECT * FROM data_staging", con=engine)
-
-    def _handle_missing_and_duplicated_values(self):
-        """Handle missing and duplicated values in the dataset"""
-        self.df["floor"].fillna("brak informacji", inplace=True)
-        self.df["status"].fillna("brak informacji", inplace=True)
-        self.df["property_type"].fillna("brak informacji", inplace=True)
-        self.df["rooms"].fillna(1, inplace=True)
-        self.df["year_built"].fillna("brak informacji", inplace=True)
-        self.df["property_condition"].fillna("brak informacji", inplace=True)
-
-        self.df.drop_duplicates(inplace=True)
-
-        self.df = self.df[self.df["price"].notna()]
-        self.df = self.df[self.df["size"].notna()]
+        self.df = (
+            pd.read_sql_query("SELECT * FROM data_main", con=engine)
+            if main
+            else pd.read_sql_query("SELECT * FROM data_staging", con=engine)
+        )
 
     def _process_price(self, filter_price: float = 0.0):
         """Process price column and filter out prices higher than filter_price"""
-        self.df["price"] = (
-            self.df["price"]
-            .str.replace("zł", "")
-            .str.replace(" ", "")
-            .replace(",", ".", regex=True)
-            .replace("Zapytajocenę", None, regex=True)
-        )
 
-        mask = pd.to_numeric(self.df["price"], errors="coerce").notna()
+        mask = pd.to_numeric(self.df[DataMainCols.PRICE], errors="coerce").notna()
         self.df = self.df[mask]
 
-        self.df["price"] = self.df["price"].astype(float)
-        
-        if filter_price > 0.0:
-            self.df = self.df[self.df["price"] < filter_price]
+        self.df[DataMainCols.PRICE] = self.df[DataMainCols.PRICE].astype(float)
 
+        if filter_price > 0.0:
+            self.df = self.df[self.df[DataMainCols.PRICE] < filter_price]
 
     def _process_size(self, filter_size: float = 0.0):
         """Process size column"""
-        self.df["size"] = self.df["size"].str.replace(",", ".").astype(float)
-        
+
+        # self.df["size"] = self.df["size"].fillna(self.df["size"].median())
+
         if filter_size > 0.0:
-            self.df = self.df[self.df["size"] < filter_size]
+            self.df = self.df[self.df[DataMainCols.SIZE] < filter_size]
 
-    def _process_location(self):
-        """Process location column"""
-
-        self.df["location"] = self.df["location"].apply(
-            lambda x: next(
-                (loc for loc in LOCATION_LIST if bool(re.search(loc, x))), "Poznań"
-            )
-        )
-
-    def _process_floor(self):
+    def _process_floor(self, filter_floor: float = 0.0):
         """Process floor column"""
 
-        self.df["floor"] = self.df["floor"].apply(
-            lambda x: x.split("/")[0] if type(x) == str else x
-        )
-
-        def extract_numbers(s):
-            return "".join(filter(str.isdigit, s)) if any(map(str.isdigit, s)) else s
-
-        self.df["floor"] = (
-            self.df["floor"]
-            .str.replace("parter", "0")
-            .str.replace("poddasze", "10")
-            .apply(extract_numbers)
-        )
-        self.df["floor"] = (
-            self.df["floor"]
-            .str.replace("zapytaj", "brak informacji")
-            .str.replace("suterena", "-1")
-        )
-
-    def _process_property_type(self):
-        """Process property_type column"""
-
-        self.df["property_type"] = (
-            self.df["property_type"]
-            .str.replace("plomba", "pozostałe")
-            .str.replace("bliźniak", "wolnostojący")
-            .str.replace("dom wolnostojący", "wolnostojący")
-        )
-
-    def _process_property_condition(self):
-        """Process property_condition column"""
-
-        self.df["property_condition"] = self.df["property_condition"].str.replace(
-            "zapytaj", "brak informacji"
-        )
+        if filter_floor > 0.0:
+            self.df = self.df[self.df[DataMainCols.FLOOR] < filter_floor]
 
     def _cast_types(self):
         numerical_col = NUMERIC_FEATS
@@ -120,29 +68,35 @@ class DataPreprocessor(DBConnector):
             df[col] = df[col].astype(float)
 
         for col in categorical_col:
-            df[col] = df[col].astype("category") 
-        
+            df[col] = df[col].astype("category")
+
         return df
 
     def _select_features(self):
         """Select features to be used in the model"""
         self.df = self.df[FEAT_COLS + [TARGET_COL]]
 
-    def run_preprocessing_pipeline(self):
+    def _standardize(self):
+        """Standardize numerical features"""
+        scaler = StandardScaler()
+        self.df[NUMERIC_FEATS] = scaler.fit_transform(self.df[NUMERIC_FEATS])
+
+    def run_preprocessing_pipeline(
+        self, cast_types: bool = True, standardize: bool = True
+    ):
         """Run preprocessing pipeline"""
 
+        if cast_types:
+            self._cast_types()
         self._process_price(filter_price=17500000.0)
-        self._handle_missing_and_duplicated_values()
-        self._process_size(filter_size=3000.0)
-        self._process_location()
-        self._process_floor()
-        self._process_property_type()
-        self._process_property_condition()
-        self._cast_types()
+        self._process_size(filter_size=1000.0)
+        self._process_floor(filter_floor=30.0)
+        if standardize:
+            self._standardize()
         self._select_features()
 
     def train_test_split(
-        self
+        self,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """Split data into train and test set
 
