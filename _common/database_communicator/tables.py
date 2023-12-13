@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from sqlalchemy import Column, Integer, String, Float, DATE, CheckConstraint
+
+from sqlalchemy import DATE, JSON, CheckConstraint, Column, Float, Integer, String
+from sqlalchemy.dialects.postgresql import BYTEA
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -95,3 +97,16 @@ class DataMainCols:
     LAST_TIME_SEEN: str = "last_time_seen"
     ROW_HASH: str = "row_hash"
     RUN_ID: str = "run_id"
+
+
+class Models(Base):
+    __tablename__ = "models"
+
+    id = Column(Integer, primary_key=True)
+    model_name = Column(String(50))
+    model_date = Column(DATE)
+    model_mae = Column(Float)
+    model_rmse = Column(Float)
+    model_r2 = Column(Float)
+    model_binary = Column(BYTEA)
+    hparams = Column(JSON)
