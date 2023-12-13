@@ -68,7 +68,7 @@ class DataSaver:
         urls_to_update = data[DataMainCols.URL]
 
         update_query = update(DataMain).where(DataMain.url.in_(urls_to_update)).values({
-            DataMainCols.INSERT_DATE: datetime.today(),
+            DataMainCols.LAST_TIME_SEEN: datetime.today(),
             DataMainCols.RUN_ID: create_run_id(self.flow_name)
         })
         self.session.execute(update_query)

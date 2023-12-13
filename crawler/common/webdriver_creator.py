@@ -22,7 +22,7 @@ class WebdriverCreator:
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0',  # noqa
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.9999.99 Safari/537.36'  # noqa
     ]
-    CHROME_WEBDRIVER_PATH: str = 'crawler/common/rasppi_chromedriver'
+    RASPPI_CHROME_WEBDRIVER_PATH: str = '/usr/lib/chromium-browser/chromedriver'
 
     selected_proxy: str = None
     selected_user_agent: str = None
@@ -45,7 +45,7 @@ class WebdriverCreator:
         chrome_options.add_argument("--headless=new")
 
         # RASP PI OPTIONS
-        # service = Service(executable_path=self.CHROME_WEBDRIVER_PATH)
+        # service = Service(executable_path=self.RASPPI_CHROME_WEBDRIVER_PATH)
         # driver = webdriver.Chrome(service=service, options=chrome_options)
 
         driver = webdriver.Chrome(options=chrome_options)
