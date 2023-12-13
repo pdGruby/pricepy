@@ -7,10 +7,11 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import RandomizedSearchCV
 from xgboost import XGBRegressor
 
+from _common.misc.variables import NUMERIC_FEATS
 from ml_model.src.data.data_preprocessing import DataPreprocessor
 
 
-class XGBoostRegressor(XGBRegressor):
+class HousePriceRegressor(XGBRegressor):
     """XGBoost Regressor with RandomizedSearchCV, learning curves plotting and evaluation methods.
 
     Args:
@@ -152,47 +153,28 @@ class XGBoostRegressor(XGBRegressor):
         with open(fname, "wb") as file:
             pickle.dump(self, file)
 
-    @staticmethod
-    def load_model(fname="xgboost_regressor.pkl"):
+    def load_model(self, fname):
         """Load model from a file using pickle
 
         Args:
-            fname (str, optional): File name. Defaults to "xgboost_regressor.pkl".
-
-        Returns:
-            XGBoostRegressor: XGBoostRegressor model
+            fname (str): File name
         """
 
         with open(fname, "rb") as file:
-            return pickle.load(file)
+            self.model = pickle.load(file)
 
-    @staticmethod
-    def infer_model(model_path: str, data: pd.DataFrame) -> float:
+    def infer(self, data: pd.DataFrame, scaler_path: str = "scaler.pkl") -> float:
         """This function is used to infer model on new data.
 
         Args:
-            model_path (str): Model path
             data (pd.DataFrame): Data to be infered as a DataFrame.
 
         Returns:
             float: Predicted price
         """
 
-        model = XGBoostRegressor.load_model(model_path)
+        scaler = pickle.load(open(scaler_path, "rb"))
         data = DataPreprocessor.static_cast_types(data)
-        return model.predict(data)[0]
+        data[NUMERIC_FEATS] = scaler.transform(data[NUMERIC_FEATS])
 
-
-if __name__ == "__main__":
-    preprocessor = DataPreprocessor()
-
-    preprocessor.run_preprocessing_pipeline()
-    X_train, X_test, y_train, y_test = preprocessor.train_test_split()
-
-    xgb_regressor = XGBoostRegressor()
-    xgb_regressor.load_data(X_train, y_train, X_test, y_test)
-    xgb_regressor.run_training_pipeline(n_iter=10, random_state=30, verbose=2)
-    # xgb_regressor.random_search_cv(n_iter=10, random_state=30, verbose=2)
-    # xgb_regressor.train(verbose=False)
-    xgb_regressor.plot_learning_curves()
-    xgb_regressor.evaluate()
+        return self.model.predict(data)[0]

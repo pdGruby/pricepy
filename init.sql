@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS models
 (
     id SERIAL PRIMARY KEY,
     model_name VARCHAR(50),
-    model_date DATE,
+    model_date TIMESTAMP(0),
     model_mae FLOAT,
     model_rmse FLOAT,
     model_r2 FLOAT,
@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS models
 GRANT ALL ON models TO "Zosia";
 GRANT ALL ON models TO "Kamil";
 GRANT ALL ON models TO "Dominika";
+GRANT ALL ON models TO "Artur";
 GRANT ALL ON data_staging TO "Zosia";
 GRANT ALL ON data_staging TO "Artur";
 GRANT ALL ON data_staging TO "Dominika";

@@ -1,3 +1,5 @@
+import pickle
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -76,13 +78,19 @@ class DataPreprocessor(DBConnector):
         """Select features to be used in the model"""
         self.df = self.df[FEAT_COLS + [TARGET_COL]]
 
-    def _standardize(self):
+    def _standardize(self, save_scaler: bool = True):
         """Standardize numerical features"""
-        scaler = StandardScaler()
-        self.df[NUMERIC_FEATS] = scaler.fit_transform(self.df[NUMERIC_FEATS])
+        scaler = StandardScaler().fit(self.df[NUMERIC_FEATS])
+        self.df[NUMERIC_FEATS] = scaler.transform(self.df[NUMERIC_FEATS])
+        if save_scaler:
+            with open("scaler.pkl", "wb") as file:
+                pickle.dump(scaler, file)
 
     def run_preprocessing_pipeline(
-        self, cast_types: bool = True, standardize: bool = True
+        self,
+        cast_types: bool = True,
+        standardize: bool = True,
+        save_scaler: bool = True,
     ):
         """Run preprocessing pipeline"""
 
@@ -92,7 +100,7 @@ class DataPreprocessor(DBConnector):
         self._process_size(filter_size=1000.0)
         self._process_floor(filter_floor=30.0)
         if standardize:
-            self._standardize()
+            self._standardize(save_scaler)
         self._select_features()
 
     def train_test_split(
@@ -119,11 +127,3 @@ class DataPreprocessor(DBConnector):
             pd.DataFrame : data
         """
         return self.df
-
-
-if __name__ == "__main__":
-    preprocessor = DataPreprocessor()
-
-    preprocessor.run_preprocessing_pipeline()
-    X_train, X_test, y_train, y_test = preprocessor.train_test_split()
-    df = preprocessor.get()

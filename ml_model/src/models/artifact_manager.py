@@ -6,8 +6,6 @@ import randomname
 
 from _common.database_communicator.db_connector import DBConnector
 from _common.database_communicator.tables import Models
-from ml_model.src.data.data_preprocessing import DataPreprocessor
-from ml_model.src.models.train_model import XGBoostRegressor
 
 
 class ArtifactManager:
@@ -23,11 +21,20 @@ class ArtifactManager:
         model,
         hparams,
     ):
+        """Push model to database
+
+        Args:
+            mae (float): Mean absolute error
+            rmse (float): Root mean squared error
+            r2 (float): R2 score
+            model (model): Trained model
+            hparams (dict): Hyperparameters
+        """
         model_name = randomname.get_name()
-        model_date = datetime.now().date().isoformat()
-        mae = str(mae)
-        rmse = str(rmse)
-        r2 = str(r2)
+        model_date = datetime.now().strftime("%Y-%m-%d %H:%M")
+        mae = float(mae)
+        rmse = float(rmse)
+        r2 = float(r2)
         model_bytes = pickle.dumps(model)
         hparams = json.dumps(hparams)
         try:
@@ -51,26 +58,53 @@ class ArtifactManager:
             self.session.commit()
             print("\n-----------------------------------")
             print("Model pushed to database")
-        finally:
-            self.session.close()
+
+    def pull_artifact(
+        self, model_name: str | None = None, model_date: str | None = None
+    ):
+        """Pull model from database. You can specify model_name or model_date to pull specific model.
+        If none is specified, the latest model will be pulled.
+
+        Args:
+            model_name (str, optional): Model name. Defaults to None.
+            model_date (str, optional): Model date. Defaults to None.
+
+        Returns:
+            model: Model"""
+        try:
+            if model_name is not None:
+                latest_model = (
+                    self.session.query(Models)
+                    .filter(Models.model_name == model_name)
+                    .first()
+                )
+            elif model_date is not None:
+                latest_model = (
+                    self.session.query(Models)
+                    .filter(Models.model_date == model_date)
+                    .first()
+                )
+            else:
+                latest_model = (
+                    self.session.query(Models)
+                    .order_by(Models.model_date.desc())
+                    .first()
+                )
+
+            if latest_model is None:
+                print("\n-----------------------------------")
+                print("No models found in the database.")
+                return None
+
+            model = pickle.loads(latest_model.model_binary)
+
             print("\n-----------------------------------")
-            print("Session closed")
+            print(
+                f"Model {latest_model.model_name} from {latest_model.model_date} pulled from database."
+            )
 
-    def pull_artifact(self):
-        pass
-
-
-if __name__ == "__main__":
-    preprocessor = DataPreprocessor()
-    preprocessor.run_preprocessing_pipeline()
-    X_train, X_test, y_train, y_test = preprocessor.train_test_split()
-
-    model = XGBoostRegressor()
-    model.load_data(X_train, X_test, y_train, y_test)
-    model.run_training_pipeline(n_iter=1)
-
-    mae, rmse, r2 = model.evaluate(verbose=False)
-    hparams = model.best_params_
-
-    artifact_manager = ArtifactManager()
-    artifact_manager.push_artifact(mae, rmse, r2, model, hparams)
+            return model
+        except Exception as e:
+            print("\n-----------------------------------")
+            print("Failed to pull model from database.")
+            print(e)
