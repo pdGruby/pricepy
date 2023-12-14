@@ -24,4 +24,4 @@ def model_trainer():
 
 
 if __name__ == "__main__":
-    model_trainer.serve(name="2023-12-14", cron='0 10 * * *')
+    model_trainer.serve(name="2023-12-14", cron='0 11 * * 7')

@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS opportunities
 (
     url TEXT PRIMARY KEY,
     predicted_price DECIMAL,
-    potential_gain DECIMAL
+    potential_gain DECIMAL,
+    FOREIGN KEY (url) REFERENCES data_main(url) ON DELETE CASCADE
 );
 
 GRANT ALL ON models TO "Zosia";
