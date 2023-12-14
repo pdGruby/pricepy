@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import DATE, JSON, CheckConstraint, Column, Float, Integer, String
+from sqlalchemy import DATE, JSON, CheckConstraint, Column, Float, Integer, String, Sequence
 from sqlalchemy.dialects.postgresql import BYTEA
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -102,11 +102,23 @@ class DataMainCols:
 class Models(Base):
     __tablename__ = "models"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, Sequence('models_id_seq'), primary_key=True)
     model_name = Column(String(50))
     model_date = Column(DATE)
     model_mae = Column(Float)
     model_rmse = Column(Float)
     model_r2 = Column(Float)
     model_binary = Column(BYTEA)
-    hparams = Column(JSON)
+    hparams = Column(JSON, nullable=True)
+
+
+@dataclass
+class ModelsCols:
+    ID: str = "id"
+    MODEL_NAME: str = "model_name"
+    MODEL_DATE: str = "model_date"
+    MODEL_MAE: str = "model_mae"
+    MODEL_RMSE: str = "model_rmse"
+    MODEL_R2: str = "model_r2"
+    MODEL_BINARY: str = "model_binary"
+    HPARAMS: str = 'hparams'
