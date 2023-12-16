@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import DATE, JSON, CheckConstraint, Column, Float, Integer, String, Sequence
+from sqlalchemy import DATE, JSON, CheckConstraint, Column, Float, Integer, String, Sequence, ForeignKey
 from sqlalchemy.dialects.postgresql import BYTEA
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -122,3 +122,18 @@ class ModelsCols:
     MODEL_R2: str = "model_r2"
     MODEL_BINARY: str = "model_binary"
     HPARAMS: str = 'hparams'
+
+
+class Opportunities(Base):
+    __tablename__ = "opportunities"
+
+    url = Column(String, ForeignKey('data_main.url', ondelete='CASCADE'), primary_key=True)
+    predicted_price = Column(Float)
+    potential_gain = Column(Float)
+
+
+@dataclass
+class OpportunitiesCols:
+    URL: str = "url"
+    PREDICTED_PRICE: str = "predicted_price"
+    POTENTIAL_GAIN: str = "potential_gain"

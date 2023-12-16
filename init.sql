@@ -61,6 +61,14 @@ CREATE TABLE IF NOT EXISTS models
     hparams JSON
 );
 
+CREATE TABLE IF NOT EXISTS opportunities
+(
+    url TEXT PRIMARY KEY,
+    predicted_price DECIMAL,
+    potential_gain DECIMAL,
+    FOREIGN KEY (url) REFERENCES data_main(url) ON DELETE CASCADE
+);
+
 GRANT ALL ON models TO "Zosia";
 GRANT ALL ON models TO "Kamil";
 GRANT ALL ON models TO "Dominika";
@@ -74,3 +82,7 @@ GRANT ALL ON data_main TO "Dominika";
 GRANT ALL ON temp_table TO "Zosia";
 GRANT ALL ON temp_table TO "Artur";
 GRANT ALL ON temp_table TO "Kamil";
+GRANT ALL ON opportunities TO "Zosia";
+GRANT ALL ON opportunities TO "Kamil";
+GRANT ALL ON opportunities TO "Dominika";
+GRANT ALL ON opportunities TO "Artur";
