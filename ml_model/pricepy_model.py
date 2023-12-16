@@ -92,7 +92,7 @@ class PricepyModel(DBConnector):
 
         rmse = np.sqrt(mean_squared_error(self.y, y_pred))
         mae = mean_absolute_error(self.y, y_pred)
-        r2 = self.model.score(self.model.X, self.model.y)
+        r2 = self.model.score(self.X, self.y)
 
         self.rmse = rmse
         self.mae = mae
