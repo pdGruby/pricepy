@@ -1,17 +1,19 @@
 from io import BytesIO
-
+import re
 import pandas as pd
 import requests
 import streamlit as st
 from PIL import Image
 
 from _common.database_communicator.db_connector import DBConnector
+from _common.database_communicator.tables import DataMain
 from _common.misc.variables import (
     LOCATION_LIST,
     PROPERTY_CONDITION_LIST,
     PROPERTY_TYPE_LIST,
     STATUS_LIST,
 )
+from ml_model.pricepy_model import PricepyModel
 from ml_model.src.models.model import *
 
 st.set_page_config(page_title="Pricepy", page_icon="")
@@ -24,14 +26,26 @@ def keep_valid_elements(text):
     return " ".join(valid_elements)
 
 
+def is_valid_email(email):
+    email_regex = r'^\S+@\S+\.\S+$'
+    return re.match(email_regex, email) is not None
+
+
 dbconn = DBConnector()
+model = PricepyModel().load_model(return_=True)
+
 engine = dbconn.create_sql_engine()
+session = dbconn.create_session()
 df = pd.read_sql("SELECT * FROM temp_table", con=engine)
-
-common_size = (200, 150)
 df["location"] = df["location"].apply(keep_valid_elements)
+common_size = (200, 150)
 
-st.title("🏠 Pricep"')
+# query = session.query(Opportunities).add_columns(DataMain.location, DataMain.image_url).outerjoin(DataMain)
+# df = pd.read_sql(query.statement, engine)
+
+
+
+st.title("🏠 Pricepy")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
     ["Okazje inwestycyjne", "Ile to kosztuje?", "Artykuły", "Raporty", "Mój nowy dom"]
@@ -42,7 +56,7 @@ with tab1:
 
     with col1:
         st.text_input(
-            label="loc", placeholder="Wyszukaj lokalizację", label_visibility="hidden"
+            label="location", placeholder="Wyszukaj lokalizację", label_visibility="hidden"
         )
 
     with col2:
@@ -139,11 +153,27 @@ with tab2:
             "location": [location],
         }
         data = pd.DataFrame(data)
-        data.fillna("brak informacji", inplace=True)
-        predicted_price = infer_model(
-            model_path="ml_model/src/models/xgboost_regressor.pkl", data=data
-        )
+        # data.fillna("brak informacji", inplace=True)
+
+        predicted_price = model.predict(data)
         st.markdown("### Przewidywana cena: " + str(predicted_price) + "zł")
+
+with tab5:
+    st.markdown('#### Bargainletter')
+    email = st.text_input('Mail', label_visibility='hidden', placeholder='Wpisz mail')
+    if st.button('Subskrybuj', type='primary'):
+
+        if is_valid_email(email):
+            emails = pd.read_sql("SELECT * FROM emails", con=engine)
+            if email in emails['email'].values:
+                st.toast('Już jesteś zapisany!', icon='✨')
+            else:
+                df = pd.DataFrame({'email': [email]})
+                df.to_sql('emails', con=engine, if_exists='append', index=False)
+                st.success('Super oferty już lecą!', icon="✅")
+
+        else:
+            st.error('Wprowadź poprawny mail!', icon="❗")
 
 with col7:
     st.markdown("#### Pricepy")
