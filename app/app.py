@@ -4,9 +4,10 @@ import pandas as pd
 import requests
 import streamlit as st
 from PIL import Image
+import webbrowser
 
 from _common.database_communicator.db_connector import DBConnector
-from _common.database_communicator.tables import DataMain
+from _common.database_communicator.tables import DataMain, Opportunities
 from _common.misc.variables import (
     LOCATION_LIST,
     PROPERTY_CONDITION_LIST,
@@ -14,16 +15,8 @@ from _common.misc.variables import (
     STATUS_LIST,
 )
 from ml_model.pricepy_model import PricepyModel
-from ml_model.src.models.model import *
 
-st.set_page_config(page_title="Pricepy", page_icon="")
-
-
-def keep_valid_elements(text):
-    valid_elements = [
-        elem.strip() for elem in text.split(",") if elem.strip() in LOCATION_LIST
-    ]
-    return " ".join(valid_elements)
+st.set_page_config(page_title="Pricepy", page_icon="🏠")
 
 
 def is_valid_email(email):
@@ -31,19 +24,26 @@ def is_valid_email(email):
     return re.match(email_regex, email) is not None
 
 
+def format_number_with_spaces(number):
+    formatted_number = '{:,.0f}'.format(number).replace(',', ' ')
+    return formatted_number
+
+
+def print_toast():
+    st.toast('Oj, niewiele okazji w tej lokalizacji...', icon='😔')
+
+
 dbconn = DBConnector()
-model = PricepyModel().load_model(return_=True)
+model = PricepyModel()
+model.load_model()
 
 engine = dbconn.create_sql_engine()
 session = dbconn.create_session()
-df = pd.read_sql("SELECT * FROM temp_table", con=engine)
-df["location"] = df["location"].apply(keep_valid_elements)
+query = session.query(Opportunities).add_columns(DataMain.location, DataMain.image_url, DataMain.price).outerjoin(
+    DataMain)
+df = pd.read_sql(query.statement, engine)
+
 common_size = (200, 150)
-
-# query = session.query(Opportunities).add_columns(DataMain.location, DataMain.image_url).outerjoin(DataMain)
-# df = pd.read_sql(query.statement, engine)
-
-
 
 st.title("🏠 Pricepy")
 
@@ -55,40 +55,66 @@ with tab1:
     col1, col2, col3 = st.columns([0.35, 0.5, 0.15])
 
     with col1:
-        st.text_input(
-            label="location", placeholder="Wyszukaj lokalizację", label_visibility="hidden"
-        )
+        location = st.selectbox("Lokalizacja", options=['Cały Poznań'] + LOCATION_LIST, label_visibility='hidden')
+        df_to_show = df[df['location'] == location].reset_index()
 
-    with col2:
-        st.text(" ")
-        st.text(" ")
-        st.button("Szukaj ", type="primary")
+    df_to_show = df if location == 'Cały Poznań' else df_to_show
 
     col4, col5, col6 = st.columns(3)
 
     with col4:
-        response = requests.get(df.loc[0, "image_url"])
+        if df_to_show.shape[0] == 0:
+            print_toast()
+            df_to_show = df
+
+        price = format_number_with_spaces(df_to_show.loc[0, "price"])
+        predicted_price = format_number_with_spaces(df_to_show.loc[0, "predicted_price"])
+        response = requests.get(df_to_show.loc[0, "image_url"])
         img = Image.open(BytesIO(response.content))
         resized_img = img.resize(common_size)
         st.image(resized_img)
-        st.markdown("#### " + df.loc[0, "location"])
-        st.markdown("#### " + df.loc[0, "price"])
+        st.markdown("#### " + df_to_show.loc[0, "location"])
+        st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
+        st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
+        url = df_to_show.loc[0, "url"]
+        if st.button('Zobacz :eyes:', key='o1', type='primary'):
+            webbrowser.open_new_tab(url)
 
     with col5:
-        response = requests.get(df.loc[1, "image_url"])
+        if df_to_show.shape[0] in [0, 1]:
+            print_toast()
+            df_to_show = df
+
+        price = format_number_with_spaces(df_to_show.loc[1, "price"])
+        predicted_price = format_number_with_spaces(df_to_show.loc[1, "predicted_price"])
+        response = requests.get(df_to_show.loc[1, "image_url"])
         img = Image.open(BytesIO(response.content))
         resized_img = img.resize(common_size)
         st.image(resized_img)
-        st.markdown("#### " + df.loc[1, "location"])
-        st.markdown("#### " + df.loc[1, "price"])
+        st.markdown("#### " + df_to_show.loc[1, "location"])
+        st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
+        st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
+        url = df_to_show.loc[1, "url"]
+        if st.button('Zobacz :eyes:', key='o2', type='primary'):
+            webbrowser.open_new_tab(url)
 
     with col6:
-        response = requests.get(df.loc[2, "image_url"])
+        if df_to_show.shape[0] in [0, 1, 2]:
+            print_toast()
+            df_to_show = df
+
+        price = format_number_with_spaces(df_to_show.loc[2, "price"])
+        predicted_price = format_number_with_spaces(df_to_show.loc[2, "predicted_price"])
+        response = requests.get(df_to_show.loc[2, "image_url"])
         img = Image.open(BytesIO(response.content))
         resized_img = img.resize(common_size)
         st.image(resized_img)
-        st.markdown("#### " + df.loc[2, "location"])
-        st.markdown("#### " + df.loc[2, "price"])
+        st.markdown("#### " + df_to_show.loc[2, "location"])
+        st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
+        st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
+        url = df.loc[2, "url"]
+        if st.button('Zobacz :eyes:', key='o3', type='primary'):
+            webbrowser.open_new_tab(url)
 
 st.markdown(
     """
@@ -141,22 +167,21 @@ with tab2:
 
     if st.button("Sprawdź", type="primary"):
         floor = "brak informacji" if floor is None else floor
-        year_built = "brak informacji" if year_built is None else floor
+        year_built = "brak informacji" if year_built is None else year_built
         data = {
             "status": [status],
             "size": [size],
             "property_type": [property_type],
             "rooms": [rooms],
-            "floor": [str(floor)],
-            "year_built": [str(year_built)],
+            "floor": [floor],
+            "year_built": [year_built],
             "property_condition": [property_condition],
-            "location": [location],
+            "location": [location]
         }
         data = pd.DataFrame(data)
-        # data.fillna("brak informacji", inplace=True)
-
-        predicted_price = model.predict(data)
-        st.markdown("### Przewidywana cena: " + str(predicted_price) + "zł")
+        data.fillna("brak informacji", inplace=True)
+        predicted_price = model.predict(data)[0][0]
+        st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
 
 with tab5:
     st.markdown('#### Bargainletter')
