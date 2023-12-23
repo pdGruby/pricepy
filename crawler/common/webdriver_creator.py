@@ -13,7 +13,7 @@ from selenium.webdriver.chrome.service import Service
 
 class WebdriverCreator:
     CHECK_API_KEY: str
-    PROXY_POOL: List[str] = ["154.16.61.246:2000"]
+    PROXY_POOL: List[str] = ["154.16.50.29:2000"]
     USER_AGENT_POOL: List[str] = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.9999.99 Safari/537.36',  # noqa
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0',  # noqa
