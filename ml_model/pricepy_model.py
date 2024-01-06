@@ -43,7 +43,6 @@ class PricepyModel(DBConnector):
         self.best_params = None
 
     def get_data(self):
-        """Get data from the database."""
         query = self.session.query(DataMain).statement
         data = pd.read_sql(query, self.engine)
         self.data = data
@@ -51,7 +50,6 @@ class PricepyModel(DBConnector):
         print("Data successfully downloaded from the database!")
 
     def preprocess_data(self):
-        """Preprocess data."""
         data = self.data
         data = data.dropna()
 
@@ -79,7 +77,6 @@ class PricepyModel(DBConnector):
         print("Data successfully preprocessed!")
 
     def hyperparameter_tuning(self):
-        """Hyperparameter tuning with GridSearchCV. It saves the best parameters into self.best_params attribute."""
         print("Hyperparameter tuning...")
         random_cv = GridSearchCV(
             estimator=ElasticNet(positive=False, fit_intercept=True, copy_X=True),
@@ -100,7 +97,6 @@ class PricepyModel(DBConnector):
         print("Found best params: ", self.best_params)
 
     def fit(self):
-        """Fit the model with the best parameters if those exist. Else, fit the model with default parameters."""
         if self.best_params is None:
             model = ElasticNet(
                 alpha=0.1, l1_ratio=0.1, positive=False, fit_intercept=True, copy_X=True
@@ -117,7 +113,6 @@ class PricepyModel(DBConnector):
         print("Model successfully created!")
 
     def train_model(self):
-        """Training pipeline with data download, preprocessing, hyperparameter tuning, fitting and evaluation."""
         self.get_data()
         self.preprocess_data()
         self.hyperparameter_tuning()
@@ -140,7 +135,6 @@ class PricepyModel(DBConnector):
         return predicted_values
 
     def evaluate(self):
-        """Evaluate the model with cross-validation and save the evaluation metrics into self.rmse, self.mae and self.r2 attributes."""
         kf = KFold(n_splits=5, shuffle=True, random_state=42)
         y_pred = cross_val_predict(self.model, self.X, self.y, cv=kf)
 
@@ -157,7 +151,6 @@ class PricepyModel(DBConnector):
         print(f"R2: {r2:.2f}")
 
     def save_model(self):
-        """Save the model into the database."""
         model_name = randomname.get_name()
         model_date = datetime.now()
         model_mae = self.mae
@@ -181,7 +174,6 @@ class PricepyModel(DBConnector):
         self.session.commit()
 
     def load_model(self, return_=False):
-        """Load the latest model from the database."""
         row = (
             self.session.query(Models.model_binary, Models.model_name)
             .order_by(desc(Models.model_date))
