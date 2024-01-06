@@ -12,8 +12,7 @@ class EmailSender:
         if isinstance(recipients, str):
             recipients = [recipients]
         if recipients is None:
-            recipients = ['kamgra5@st.amu.edu.pl', 'domede@st.amu.edu.pl', 'artmak1@st.amu.edu.pl',
-                          'zofrut1@st.amu.edu.pl']
+            recipients = ['kamgra5@st.amu.edu.pl', 'zofrut1@st.amu.edu.pl']
 
         self.recipients = recipients
         self.subject = subject
@@ -32,7 +31,7 @@ class EmailSender:
         if self.subject is None:
             raise ValueError("The message subject is empty!")
 
-        if '<html>' in self.body.lower():
+        if '<html' in self.body.lower():  # lack of closing mark ('>') on purpose, do not change it
             msg = MIMEText(self.body, 'html')
         else:
             msg = MIMEText(self.body)
