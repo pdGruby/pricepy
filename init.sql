@@ -69,20 +69,40 @@ CREATE TABLE IF NOT EXISTS opportunities
     FOREIGN KEY (url) REFERENCES data_main(url) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS bargainletter_emails
+(
+    email TEXT PRIMARY KEY,
+    max_real_price DECIMAL,
+    min_potential_gain DECIMAL,
+    "location" VARCHAR(30),
+);
+
 GRANT ALL ON models TO "Zosia";
 GRANT ALL ON models TO "Kamil";
 GRANT ALL ON models TO "Dominika";
 GRANT ALL ON models TO "Artur";
+
+GRANT ALL ON data_staging TO "Kamil";
 GRANT ALL ON data_staging TO "Zosia";
 GRANT ALL ON data_staging TO "Artur";
 GRANT ALL ON data_staging TO "Dominika";
+
+GRANT ALL ON data_main TO "Kamil";
 GRANT ALL ON data_main TO "Zosia";
 GRANT ALL ON data_main TO "Artur";
 GRANT ALL ON data_main TO "Dominika";
+
+GRANT ALL ON temp_table TO "Kamil";
 GRANT ALL ON temp_table TO "Zosia";
 GRANT ALL ON temp_table TO "Artur";
 GRANT ALL ON temp_table TO "Kamil";
+
 GRANT ALL ON opportunities TO "Zosia";
 GRANT ALL ON opportunities TO "Kamil";
 GRANT ALL ON opportunities TO "Dominika";
 GRANT ALL ON opportunities TO "Artur";
+
+GRANT ALL ON bargainletter_emails TO "Zosia";
+GRANT ALL ON bargainletter_emails TO "Kamil";
+GRANT ALL ON bargainletter_emails TO "Dominika";
+GRANT ALL ON bargainletter_emails TO "Artur";
