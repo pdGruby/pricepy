@@ -4,8 +4,6 @@ import pandas as pd
 import requests
 import streamlit as st
 from PIL import Image
-import webbrowser
-
 from _common.database_communicator.db_connector import DBConnector
 from _common.database_communicator.tables import DataMain, Opportunities
 from _common.misc.variables import (
@@ -16,7 +14,10 @@ from _common.misc.variables import (
 )
 from ml_model.pricepy_model import PricepyModel
 
-st.set_page_config(page_title="Pricepy", page_icon="🏠")
+st.set_page_config(
+    page_title="Pricepy",
+    page_icon="app/images/logo_icon.png"
+)
 
 
 def is_valid_email(email):
@@ -29,9 +30,37 @@ def format_number_with_spaces(number):
     return formatted_number
 
 
-def print_toast():
-    st.toast('Oj, niewiele okazji w tej lokalizacji...', icon='😔')
+def show_button(url):
+    st.markdown(
+        f'<a href="{url}" style="display: inline-block; padding: 8px 12px; background-color: #10500a; color: white; '
+        f'text-align: center; text-decoration: none; font-size: 16px; border-radius: 8px;">Zobacz 👀</a>',
+        unsafe_allow_html=True
+    )
 
+
+def adjust_df(df_to_show, df, list, display_msg):
+    if df_to_show.shape[0] in list:
+        display_msg = True
+        return df, display_msg
+    else:
+        return df_to_show, display_msg
+
+
+hide_img_fs = '''
+<style>
+
+button[title="View fullscreen"] {
+    visibility: hidden;
+    }
+    
+    .block-container {
+    padding-top: 1rem;
+                }  
+
+</style>
+'''
+
+st.markdown(hide_img_fs, unsafe_allow_html=True)
 
 dbconn = DBConnector()
 model = PricepyModel()
@@ -44,8 +73,9 @@ query = session.query(Opportunities).add_columns(DataMain.location, DataMain.ima
 df = pd.read_sql(query.statement, engine)
 
 common_size = (200, 150)
+display_msg = False
 
-st.title("🏠 Pricepy")
+st.image('app/images/logo.png', width=460)
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
     ["Okazje inwestycyjne", "Ile to kosztuje?", "Artykuły", "Raporty", "Mój nowy dom"]
@@ -63,9 +93,7 @@ with tab1:
     col4, col5, col6 = st.columns(3)
 
     with col4:
-        if df_to_show.shape[0] == 0:
-            print_toast()
-            df_to_show = df
+        df_to_show, display_msg = adjust_df(df_to_show, df, [0], display_msg)
 
         price = format_number_with_spaces(df_to_show.loc[0, "price"])
         predicted_price = format_number_with_spaces(df_to_show.loc[0, "predicted_price"])
@@ -77,13 +105,10 @@ with tab1:
         st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
         st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
         url = df_to_show.loc[0, "url"]
-        if st.button('Zobacz :eyes:', key='o1', type='primary'):
-            webbrowser.open_new_tab(url)
+        show_button(url)
 
     with col5:
-        if df_to_show.shape[0] in [0, 1]:
-            print_toast()
-            df_to_show = df
+        df_to_show, display_msg = adjust_df(df_to_show, df, [0, 1], display_msg)
 
         price = format_number_with_spaces(df_to_show.loc[1, "price"])
         predicted_price = format_number_with_spaces(df_to_show.loc[1, "predicted_price"])
@@ -95,13 +120,10 @@ with tab1:
         st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
         st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
         url = df_to_show.loc[1, "url"]
-        if st.button('Zobacz :eyes:', key='o2', type='primary'):
-            webbrowser.open_new_tab(url)
+        show_button(url)
 
     with col6:
-        if df_to_show.shape[0] in [0, 1, 2]:
-            print_toast()
-            df_to_show = df
+        df_to_show, display_msg = adjust_df(df_to_show, df, [0, 1, 2], display_msg)
 
         price = format_number_with_spaces(df_to_show.loc[2, "price"])
         predicted_price = format_number_with_spaces(df_to_show.loc[2, "predicted_price"])
@@ -113,8 +135,10 @@ with tab1:
         st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
         st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
         url = df.loc[2, "url"]
-        if st.button('Zobacz :eyes:', key='o3', type='primary'):
-            webbrowser.open_new_tab(url)
+        show_button(url)
+
+if display_msg:
+    st.warning('Oj, niewiele okazji w tej lokalizacji...', icon='😔')
 
 st.markdown(
     """
@@ -137,7 +161,7 @@ with tab2:
         property_condition = st.selectbox(
             "Stan nieruchomości", options=PROPERTY_CONDITION_LIST
         )
-        rooms = st.slider("Liczba pomieszczeń", min_value=1, max_value=20, value=4)
+        rooms = st.slider("Liczba pomieszczeń", min_value=1, max_value=10, value=3)
 
     with st.expander("Więcej cech"):
         col1, col2 = st.columns([0.5, 0.5])
@@ -181,7 +205,14 @@ with tab2:
         data = pd.DataFrame(data)
         data.fillna("brak informacji", inplace=True)
         predicted_price = model.predict(data)[0][0]
-        st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
+        predicted_price_per_m2 = predicted_price / size
+
+        if (predicted_price_per_m2 > 20000) or (predicted_price_per_m2 < 8000):
+            st.error('Dobierz sensowniejsze parametry', icon='❌')
+            st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
+            st.markdown("### Za m2: " + str(predicted_price_per_m2) + " zł")
+        else:
+            st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
 
 with tab5:
     st.markdown('#### Bargainletter')
@@ -191,12 +222,11 @@ with tab5:
         if is_valid_email(email):
             emails = pd.read_sql("SELECT * FROM emails", con=engine)
             if email in emails['email'].values:
-                st.toast('Już jesteś zapisany!', icon='✨')
+                st.warning('Już jesteś zapisany!', icon='✨')
             else:
                 df = pd.DataFrame({'email': [email]})
                 df.to_sql('emails', con=engine, if_exists='append', index=False)
                 st.success('Super oferty już lecą!', icon="✅")
-
         else:
             st.error('Wprowadź poprawny mail!', icon="❗")
 

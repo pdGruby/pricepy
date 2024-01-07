@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import DATE, JSON, CheckConstraint, Column, Float, Integer, String, Sequence, ForeignKey
+from sqlalchemy import DATE, JSON, CheckConstraint, Column, Float, Integer, String, Sequence, ForeignKey, TEXT
 from sqlalchemy.dialects.postgresql import BYTEA
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -137,3 +137,20 @@ class OpportunitiesCols:
     URL: str = "url"
     PREDICTED_PRICE: str = "predicted_price"
     POTENTIAL_GAIN: str = "potential_gain"
+
+
+class BargainletterEmails(Base):
+    __tablename__ = 'bargainletter_emails'
+
+    email = Column(TEXT, primary_key=True)
+    max_real_price = Column(Float)
+    min_potential_gain = Column(Float)
+    location = Column(String(30))
+
+
+@dataclass
+class BargainletterEmailsCols:
+    EMAIL: str = 'email'
+    MAX_REAL_PRICE: str = 'max_real_price'
+    MIN_POTENTIAL_GAIN: str = 'min_potential_gain'
+    LOCATION: str = 'location'
