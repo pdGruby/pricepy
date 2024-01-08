@@ -132,7 +132,7 @@ class PricepyModel(DBConnector):
         X_encoded = self.X_preprocessor.transform(X)
         predicted_values = self.model.predict(X_encoded)
 
-        return predicted_values
+        return predicted_values.reshape(-1, 1)
 
     def evaluate(self):
         kf = KFold(n_splits=5, shuffle=True, random_state=42)
