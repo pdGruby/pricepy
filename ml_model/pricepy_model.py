@@ -41,6 +41,7 @@ class PricepyModel(DBConnector):
         self.rmse = None
         self.r2 = None
         self.best_params = None
+        self.typical_values = None
 
     def get_data(self):
         query = self.session.query(DataMain).statement
@@ -112,12 +113,49 @@ class PricepyModel(DBConnector):
 
         print("Model successfully created!")
 
+    @property
+    def data_without_na(self):
+        return self.data.dropna()
+
+    def get_typical_values(self):
+        data = self.data_without_na
+        status = (
+            data[DataMainCols.STATUS]
+            .groupby(data[DataMainCols.LOCATION])
+            .apply(lambda x: x.value_counts().index[0])
+        )
+        property_type = (
+            data[DataMainCols.PROPERTY_TYPE]
+            .groupby(data[DataMainCols.LOCATION])
+            .apply(lambda x: x.value_counts().index[0])
+        )
+        year_built = (
+            data[DataMainCols.YEAR_BUILT]
+            .groupby(data[DataMainCols.LOCATION])
+            .median()
+            # .astype(int)
+        )
+        floor = (
+            data[DataMainCols.FLOOR]
+            .groupby(data[DataMainCols.LOCATION])
+            .median()
+            # .astype(int)
+        )
+        self.typical_values = {
+            DataMainCols.STATUS: status,
+            DataMainCols.PROPERTY_TYPE: property_type,
+            DataMainCols.YEAR_BUILT: year_built,
+            DataMainCols.FLOOR: floor,
+        }
+        self.typical_values = pd.DataFrame(self.typical_values)
+
     def train_model(self):
         self.get_data()
         self.preprocess_data()
         self.hyperparameter_tuning()
         self.fit()
         self.evaluate()
+        self.get_typical_values()
 
     def predict(self, data: pd.DataFrame) -> np.ndarray:
         """Predict the price of the given data.
