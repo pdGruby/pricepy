@@ -3,7 +3,7 @@ from typing import Union, List, Any, Callable
 import re
 import pandas as pd
 
-from _common.misc.variables import LOCATION_LIST
+from _common.misc.variables import LOCATION_MAP
 
 from _common.database_communicator.tables import DataMainCols, DataStagingCols
 
@@ -108,9 +108,12 @@ class DataTransformer:
         if value is None:
             return None
 
-        matched_locs = [loc for loc in LOCATION_LIST if loc.lower() in value]
-        if matched_locs:
-            return matched_locs[0]
+        for location, sublocations in LOCATION_MAP.items():
+            for sublocation in sublocations:
+                if sublocation.lower() in value:
+                    matched_loc = location
+                    return matched_loc
+
         return None
 
     @staticmethod
