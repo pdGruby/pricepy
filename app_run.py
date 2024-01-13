@@ -5,7 +5,7 @@ import requests
 import streamlit as st
 from PIL import Image
 from _common.database_communicator.db_connector import DBConnector
-from _common.database_communicator.tables import DataMain, Opportunities
+from _common.database_communicator.tables import DataMain, Opportunities, BargainletterEmails
 from _common.misc.variables import (
     LOCATION_LIST,
     PROPERTY_CONDITION_LIST,
@@ -28,7 +28,7 @@ def create_db_connection():
 
 
 @st.cache_data
-def load_and_query_db(_dbconn, _engine):
+def load_opportunities_from_db(_dbconn, _engine):
     session = _dbconn.create_session()
     query = session.query(Opportunities).add_columns(DataMain.location, DataMain.image_url, DataMain.price).outerjoin(
         DataMain)
@@ -42,9 +42,10 @@ def load_model():
     return model
 
 
-@st.cache_data
-def load_emails_from_db(engine):
-    return pd.read_sql("SELECT * FROM emails", con=engine)
+def load_sub_info_from_db(_dbconn, _engine):
+    session = _dbconn.create_session()
+    query = session.query(BargainletterEmails.email, BargainletterEmails.id)
+    return pd.read_sql(query.statement, _engine)
 
 
 def is_valid_email(email):
@@ -53,7 +54,7 @@ def is_valid_email(email):
 
 
 def format_number_with_spaces(number):
-    formatted_number = '{:,.0f}'.format(number).replace(',', ' ')
+    formatted_number = '{:,.0f}'.format(round(number, -2)).replace(',', ' ')
     return formatted_number
 
 
@@ -90,15 +91,15 @@ button[title="View fullscreen"] {
 st.markdown(hide_img_fs, unsafe_allow_html=True)
 
 dbconn, engine = create_db_connection()
-df = load_and_query_db(dbconn, engine)
+df = load_opportunities_from_db(dbconn, engine)
 model = load_model()
 common_size = (200, 150)
 display_msg = False
 
-st.image('app/images/logo.png', width=460)
+st.image('app/images/logo.png', width=385)
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Okazje inwestycyjne", "Ile to kosztuje?", "Artykuły", "Raporty", "Mój nowy dom"]
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Okazje inwestycyjne", "Ile to kosztuje?", "Raporty", "Bargainletter"]
 )
 
 with tab1:
@@ -113,9 +114,10 @@ with tab1:
     col4, col5, col6 = st.columns(3)
 
     with col4:
-        df_to_show, display_msg = adjust_df(df_to_show, df, [0], display_msg)
 
+        df_to_show, display_msg = adjust_df(df_to_show, df, [0], display_msg)
         price = format_number_with_spaces(df_to_show.loc[0, "price"])
+
         predicted_price = format_number_with_spaces(df_to_show.loc[0, "predicted_price"])
         response = requests.get(df_to_show.loc[0, "image_url"])
         img = Image.open(BytesIO(response.content))
@@ -154,7 +156,7 @@ with tab1:
         st.markdown("#### " + df_to_show.loc[2, "location"])
         st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
         st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
-        url = df.loc[2, "url"]
+        url = df_to_show.loc[2, "url"]
         show_button(url)
 
     if display_msg:
@@ -210,7 +212,11 @@ with tab2:
                     "Piętro", min_value=0, value=None, placeholder="brak informacji"
                 )
 
-        if st.form_submit_button("Sprawdź", type="primary"):
+        col1, col2, col3= st.columns([0.43, 0.32, 0.25])
+
+        with col2:
+            btn_check = st.form_submit_button("Sprawdź", type="primary")
+        if btn_check:
             floor = "brak informacji" if floor is None else floor
             year_built = "brak informacji" if year_built is None else year_built
             data = {
@@ -230,25 +236,49 @@ with tab2:
 
             if (predicted_price_per_m2 > 20000) or (predicted_price_per_m2 < 8000):
                 st.error('Dobierz sensowniejsze parametry', icon='❌')
-                st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
             else:
                 st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
 
-with tab5:
-    st.markdown('#### Bargainletter')
-    email = st.text_input('Mail', label_visibility='hidden', placeholder='Wpisz mail')
-    if st.button('Subskrybuj', type='primary'):
+with tab4:
 
-        if is_valid_email(email):
-            emails = load_emails_from_db(engine)
-            if email in emails['email'].values:
-                st.warning('Już jesteś zapisany!', icon='✨')
-            else:
-                df = pd.DataFrame({'email': [email]})
-                df.to_sql('emails', con=engine, if_exists='append', index=False)
-                st.success('Super oferty już lecą!', icon="✅")
-        else:
-            st.error('Wprowadź poprawny mail!', icon="❗")
+    col1, col2 = st.columns([0.55, 0.45])
+
+    with col1:
+
+        col3, col4, col5 = st.columns([0.30, 0.40, 0.30])
+        with col4:
+            st.markdown('#### Bargainletter')
+
+        with st.form("Bargainletter"):
+            location = st.selectbox("Lokalizacja", options=LOCATION_LIST,  key='loc_bl')
+            max_real_price = st.number_input(
+                "Maksymalna rzeczywista cena mieszkania [zł]",
+                min_value=0,
+                value=700000
+            )
+            min_potential_gain = st.number_input(
+                "Minimalny procent zysku",
+                min_value=0,
+                max_value=100,
+                value=10
+            )
+            email = st.text_input('Email', placeholder='przyklad@gmail.com')
+
+            col1, col2, col3 = st.columns([0.34, 0.33, 0.33])
+            with col2:
+                btn_subskrybuj = st.form_submit_button('Subskrybuj', type="primary")
+
+            if btn_subskrybuj:
+                if is_valid_email(email):
+                    sub_info = load_sub_info_from_db(dbconn, engine)
+                    if sub_email in sub_info['email'].values and sub_loc in sub_info['location'].values:
+                        st.warning('Już jesteś zapisany!', icon='✨')
+                    else:
+                        df = pd.DataFrame({'email': [email], 'max_real_price': [max_real_price], 'min_potential_gain': [min_potential_gain], 'location': [location]})
+                        df.to_sql('bargainletter_emails', con=engine, if_exists='append', index=False)
+                        st.success('Super oferty już lecą!', icon="✅")
+                else:
+                    st.error('Wprowadź poprawny mail!', icon="❗")
 
 with col7:
     st.markdown("#### Pricepy")
