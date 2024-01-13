@@ -3,6 +3,7 @@ import plotly.express as px
 
 from _common.database_communicator.db_connector import DBConnector
 from _common.database_communicator.tables import DataMain, DataMainCols
+from _common.misc.variables import LOCATION_LIST
 
 
 class Dashboards(DBConnector):
@@ -87,7 +88,7 @@ class Dashboards(DBConnector):
             title="Średnia cena mieszkania za metr kwadratowy w Poznaniu w zależności od daty",
         )
 
-        locations = df[DataMainCols.LOCATION].unique()
+        locations = LOCATION_LIST
 
         buttons = [
             dict(
@@ -127,6 +128,14 @@ class Dashboards(DBConnector):
             title="Liczba ofert mieszkań w Poznaniu w zależności od lokalizacji",
         )
         return fig
+
+    def get_all_figs(self):
+        return [
+            self.average_price_per_location(),
+            self.average_price_per_property_type(),
+            self.average_price_in_time_per_location(),
+            self.offers_per_location(),
+        ]
 
 
 if __name__ == "__main__":
