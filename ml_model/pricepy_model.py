@@ -133,13 +133,13 @@ class PricepyModel(DBConnector):
             data[DataMainCols.YEAR_BUILT]
             .groupby(data[DataMainCols.LOCATION])
             .median()
-            # .astype(int)
+            .astype(int)
         )
         floor = (
             data[DataMainCols.FLOOR]
             .groupby(data[DataMainCols.LOCATION])
             .median()
-            # .astype(int)
+            .astype(int)
         )
         self.typical_values = {
             DataMainCols.STATUS: status,
