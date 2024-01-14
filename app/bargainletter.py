@@ -117,10 +117,6 @@ class Bargainletter(DBConnector):
                 print(f"No investment opportunities found for: {recipient}")
                 continue
 
-            if recipient not in ['kamgra5@st.amu.edu.pl', 'kamil.grala32466@gmail.com']:
-                print(f"Skipped {recipient}")
-                continue
-
             sender = EmailSender(recipients=[recipient],
                                  subject=f"[PRICEPY] Znaleźliśmy potencjalne okazje inwestycyjne!")
             sender.create_body(message)
