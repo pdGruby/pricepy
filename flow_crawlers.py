@@ -4,7 +4,7 @@ from prefect import flow, task
 from crawler.crawler_otodom import CrawlerOTODOM
 from crawler.crawler_olx import CrawlerOLX
 from crawler.data_cleaner.data_cleaner import DataCleaner
-from _common.email_sender.flow_finished_template import send_finish_message
+from _common.email_sender.send_finish_message import send_finish_message
 
 
 @task(name='scrape_otodom_data', log_prints=True)
