@@ -1,7 +1,7 @@
 from prefect import flow, task
 
 from app.bargainletter import Bargainletter
-from _common.email_sender.flow_finished_template import send_finish_message
+from _common.email_sender.send_finish_message import send_finish_message
 
 
 @task(name='send_bargains', log_prints=True)

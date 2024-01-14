@@ -142,7 +142,8 @@ class OpportunitiesCols:
 class BargainletterEmails(Base):
     __tablename__ = 'bargainletter_emails'
 
-    email = Column(TEXT, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    email = Column(TEXT, nullable=False)
     max_real_price = Column(Float)
     min_potential_gain = Column(Float)
     location = Column(String(30))
@@ -150,6 +151,7 @@ class BargainletterEmails(Base):
 
 @dataclass
 class BargainletterEmailsCols:
+    ID: str = 'id'
     EMAIL: str = 'email'
     MAX_REAL_PRICE: str = 'max_real_price'
     MIN_POTENTIAL_GAIN: str = 'min_potential_gain'
