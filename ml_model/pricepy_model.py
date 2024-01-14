@@ -170,7 +170,11 @@ class PricepyModel(DBConnector):
             DataMainCols.FLOOR,
         ]
         for col in cols_to_map:
-            if X[col].values[0] is None:
+            if (
+                X[col].values[0] is None
+                or X[col].values[0] is pd.NA
+                or X[col].values[0] == "brak informacji"
+            ):
                 X[col] = X.apply(
                     lambda row: self.typical_values[col][row[DataMainCols.LOCATION]],
                     axis=1,
