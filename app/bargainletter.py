@@ -130,7 +130,3 @@ class Bargainletter(DBConnector):
     def load_html_template(html_file_name) -> str:
         with open(f'app/bargainletter_message_html_templates/{html_file_name}', 'r', encoding='utf-8') as file:
             return file.read()
-
-
-x = Bargainletter()
-x.send_bargains()
