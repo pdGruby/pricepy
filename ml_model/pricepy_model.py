@@ -123,31 +123,36 @@ class PricepyModel(DBConnector):
             data[DataMainCols.STATUS]
             .groupby(data[DataMainCols.LOCATION])
             .apply(lambda x: x.value_counts().index[0])
+            .to_dict()
         )
         property_type = (
             data[DataMainCols.PROPERTY_TYPE]
             .groupby(data[DataMainCols.LOCATION])
             .apply(lambda x: x.value_counts().index[0])
+            .to_dict()
         )
         year_built = (
             data[DataMainCols.YEAR_BUILT]
             .groupby(data[DataMainCols.LOCATION])
             .median()
             .astype(int)
+            .to_dict()
         )
         floor = (
             data[DataMainCols.FLOOR]
             .groupby(data[DataMainCols.LOCATION])
             .median()
             .astype(int)
+            .to_dict()
         )
-        self.typical_values = {
+        typical_values = {
             DataMainCols.STATUS: status,
             DataMainCols.PROPERTY_TYPE: property_type,
             DataMainCols.YEAR_BUILT: year_built,
             DataMainCols.FLOOR: floor,
         }
-        self.typical_values = pd.DataFrame(self.typical_values)
+        self.typical_values = typical_values
+        self.model.typical_values = typical_values
 
     def train_model(self):
         self.get_data()
@@ -156,6 +161,21 @@ class PricepyModel(DBConnector):
         self.fit()
         self.evaluate()
         self.get_typical_values()
+
+    def map_none_values(self, X):
+        cols_to_map = [
+            DataMainCols.STATUS,
+            DataMainCols.PROPERTY_TYPE,
+            DataMainCols.YEAR_BUILT,
+            DataMainCols.FLOOR,
+        ]
+        for col in cols_to_map:
+            if X[col].values[0] is None:
+                X[col] = X.apply(
+                    lambda row: self.typical_values[col][row[DataMainCols.LOCATION]],
+                    axis=1,
+                )
+        return X
 
     def predict(self, data: pd.DataFrame) -> np.ndarray:
         """Predict the price of the given data.
@@ -167,6 +187,7 @@ class PricepyModel(DBConnector):
             np.ndarray: Predicted values.
         """
         X = data[FEAT_COLS].copy()
+        X = self.map_none_values(X)
         X_encoded = self.X_preprocessor.transform(X)
         predicted_values = self.model.predict(X_encoded)
 
@@ -222,6 +243,7 @@ class PricepyModel(DBConnector):
 
         self.X_preprocessor = latest_model.X_preprocessor
         self.model = latest_model
+        self.typical_values = self.model.typical_values
 
         print(f"Successfully loaded the latest model! The model name: {model_name}")
 
