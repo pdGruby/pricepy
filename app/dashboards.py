@@ -3,7 +3,6 @@ import plotly.express as px
 
 from _common.database_communicator.db_connector import DBConnector
 from _common.database_communicator.tables import DataMain, DataMainCols
-from _common.misc.variables import LOCATION_LIST
 
 
 class Dashboards(DBConnector):
@@ -56,7 +55,7 @@ class Dashboards(DBConnector):
         )
         return fig
 
-    def average_price_in_time_per_location(self, window_size=5):
+    def average_price_in_time_per_location(self, window_size=4):
         # Add a new column for price per m2
         self.data["PRICE_PER_M2"] = (
             self.data[DataMainCols.PRICE] / self.data[DataMainCols.SIZE]
@@ -88,11 +87,16 @@ class Dashboards(DBConnector):
             title="Średnia cena mieszkania za metr kwadratowy w Poznaniu w zależności od daty",
         )
 
-        locations = LOCATION_LIST
+        locations = df[DataMainCols.LOCATION].unique().tolist()
+
+        trace_id = 3
+        for trace in fig.data:
+            trace.visible = False
+        fig.data[trace_id].visible = True
 
         buttons = [
             dict(
-                label="All",
+                label="Wszystkie",
                 method="update",
                 args=[{"visible": [True for _ in locations]}],
             )
@@ -104,7 +108,19 @@ class Dashboards(DBConnector):
                 dict(label=location, method="update", args=[{"visible": visibility}])
             )
 
-        fig.update_layout(updatemenus=[dict(active=0, buttons=buttons)])
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    type="dropdown",
+                    direction="down",
+                    x=1.3,
+                    y=1.2,
+                    showactive=True,
+                    active=trace_id + 1,
+                    buttons=buttons,
+                )
+            ]
+        )
 
         return fig
 
