@@ -25,8 +25,7 @@ st.set_page_config(
 def create_db_connection():
     dbconn = DBConnector()
     engine = dbconn.create_sql_engine()
-    session = dbconn.create_session()
-    return dbconn, engine, session
+    return dbconn, engine
 
 
 @st.cache_data
@@ -70,6 +69,15 @@ def adjust_df(df_to_show, df, list, display_msg):
         return df_to_show, display_msg
 
 
+def add_bargainletter_info_to_db(_dbconn, email, max_real_price, min_potential_gain, location):
+    session = _dbconn.create_session()
+    email_obj = BargainletterEmails(email=email, max_real_price=max_real_price,
+                                    min_potential_gain=min_potential_gain, location=location)
+    session.add(email_obj)
+    session.commit()
+    session.close()
+
+
 hide_img_fs = '''
 <style>
 
@@ -86,7 +94,7 @@ button[title="View fullscreen"] {
 
 st.markdown(hide_img_fs, unsafe_allow_html=True)
 
-dbconn, engine, session = create_db_connection()
+dbconn, engine = create_db_connection()
 df = load_opportunities_from_db(dbconn, engine)
 model = load_model()
 common_size = (200, 150)
@@ -274,11 +282,7 @@ with tab4:
 
         if btn_subskrybuj:
             if is_valid_email(email):
-                email_obj = BargainletterEmails(email=email, max_real_price=max_real_price,
-                                                min_potential_gain=min_potential_gain, location=location)
-                session.add(email_obj)
-                session.commit()
-                session.close()
+                add_bargainletter_info_to_db(dbconn, email, max_real_price, min_potential_gain, location)
                 st.success('Super oferty już lecą!', icon="✅")
             else:
                 st.error('Wprowadź poprawny mail!', icon="❗")
