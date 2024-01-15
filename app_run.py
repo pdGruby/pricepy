@@ -5,7 +5,7 @@ import requests
 import streamlit as st
 from PIL import Image
 from _common.database_communicator.db_connector import DBConnector
-from _common.database_communicator.tables import DataMain, Opportunities, BargainletterEmails
+from _common.database_communicator.tables import DataMain, Opportunities, BargainletterEmails, BargainletterEmailsCols
 from _common.misc.variables import (
     LOCATION_LIST,
     PROPERTY_CONDITION_LIST,
@@ -13,6 +13,7 @@ from _common.misc.variables import (
     STATUS_LIST,
 )
 from ml_model.pricepy_model import PricepyModel
+from app.dashboards import *
 
 st.set_page_config(
     page_title="Pricepy",
@@ -42,12 +43,6 @@ def load_model():
     return model
 
 
-def load_sub_info_from_db(_dbconn, _engine):
-    session = _dbconn.create_session()
-    query = session.query(BargainletterEmails.email, BargainletterEmails.id)
-    return pd.read_sql(query.statement, _engine)
-
-
 def is_valid_email(email):
     email_regex = r'^\S+@\S+\.\S+$'
     return re.match(email_regex, email) is not None
@@ -72,6 +67,15 @@ def adjust_df(df_to_show, df, list, display_msg):
         return df, display_msg
     else:
         return df_to_show, display_msg
+
+
+def add_bargainletter_info_to_db(_dbconn, email, max_real_price, min_potential_gain, location):
+    session = _dbconn.create_session()
+    email_obj = BargainletterEmails(email=email, max_real_price=max_real_price,
+                                    min_potential_gain=min_potential_gain, location=location)
+    session.add(email_obj)
+    session.commit()
+    session.close()
 
 
 hide_img_fs = '''
@@ -184,7 +188,7 @@ with tab2:
             property_condition = st.selectbox(
                 "Stan nieruchomości", options=PROPERTY_CONDITION_LIST
             )
-            rooms = st.slider("Liczba pomieszczeń", min_value=1, max_value=10, value=3)
+            rooms = st.slider("Liczba pokojów", min_value=1, max_value=10, value=3)
 
         with st.expander("Więcej cech"):
             col1, col2 = st.columns([0.5, 0.5])
@@ -235,50 +239,53 @@ with tab2:
             predicted_price_per_m2 = predicted_price / size
 
             if (predicted_price_per_m2 > 20000) or (predicted_price_per_m2 < 8000):
-                st.error('Dobierz sensowniejsze parametry', icon='❌')
+                st.error('Proszę dobrać inne parametry', icon='❌')
             else:
                 st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
 
+
+with tab3:
+    plots = Dashboards().get_all_figs()
+    for i in range(4):
+        st.plotly_chart(plots[i])
+
+
 with tab4:
 
-    col1, col2 = st.columns([0.55, 0.45])
+    col3, col4, col5 = st.columns([0.40, 0.30, 0.30])
 
-    with col1:
+    with col4:
+        st.markdown('#### Bargainletter')
 
-        col3, col4, col5 = st.columns([0.30, 0.40, 0.30])
-        with col4:
-            st.markdown('#### Bargainletter')
-
-        with st.form("Bargainletter"):
-            location = st.selectbox("Lokalizacja", options=LOCATION_LIST,  key='loc_bl')
+    with st.form("Bargainletter"):
+        col1, col2 = st.columns([0.5, 0.5])
+        with col1:
+            location = st.selectbox("Lokalizacja", options=['Cały Poznań'] + LOCATION_LIST,  key='loc_bl')
             max_real_price = st.number_input(
-                "Maksymalna rzeczywista cena mieszkania [zł]",
-                min_value=0,
-                value=700000
-            )
+            "Maksymalna rzeczywista cena mieszkania [zł]",
+            min_value=0,
+            value=700000
+        )
+
+        with col2:
             min_potential_gain = st.number_input(
-                "Minimalny procent zysku",
-                min_value=0,
-                max_value=100,
-                value=10
-            )
+            "Minimalny procent zysku",
+            min_value=0,
+            max_value=100,
+            value=10
+        )
             email = st.text_input('Email', placeholder='przyklad@gmail.com')
 
-            col1, col2, col3 = st.columns([0.34, 0.33, 0.33])
-            with col2:
-                btn_subskrybuj = st.form_submit_button('Subskrybuj', type="primary")
+        col1, col2, col3 = st.columns([0.421, 0.279, 0.30])
+        with col2:
+            btn_subskrybuj = st.form_submit_button('Subskrybuj', type="primary")
 
-            if btn_subskrybuj:
-                if is_valid_email(email):
-                    sub_info = load_sub_info_from_db(dbconn, engine)
-                    if sub_email in sub_info['email'].values and sub_loc in sub_info['location'].values:
-                        st.warning('Już jesteś zapisany!', icon='✨')
-                    else:
-                        df = pd.DataFrame({'email': [email], 'max_real_price': [max_real_price], 'min_potential_gain': [min_potential_gain], 'location': [location]})
-                        df.to_sql('bargainletter_emails', con=engine, if_exists='append', index=False)
-                        st.success('Super oferty już lecą!', icon="✅")
-                else:
-                    st.error('Wprowadź poprawny mail!', icon="❗")
+        if btn_subskrybuj:
+            if is_valid_email(email):
+                add_bargainletter_info_to_db(dbconn, email, max_real_price, min_potential_gain, location)
+                st.success('Super oferty już lecą!', icon="✅")
+            else:
+                st.error('Wprowadź poprawny mail!', icon="❗")
 
 with col7:
     st.markdown("#### Pricepy")
