@@ -13,6 +13,7 @@ from _common.misc.variables import (
     STATUS_LIST,
 )
 from ml_model.pricepy_model import PricepyModel
+from app.dashboards import *
 
 st.set_page_config(
     page_title="Pricepy",
@@ -233,6 +234,13 @@ with tab2:
                 st.error('Proszę dobrać inne parametry', icon='❌')
             else:
                 st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
+
+
+with tab3:
+    plots = Dashboards().get_all_figs()
+    for i in range(4):
+        st.plotly_chart(plots[i])
+
 
 with tab4:
 
