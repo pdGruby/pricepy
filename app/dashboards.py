@@ -1,16 +1,12 @@
 import pandas as pd
 import plotly.express as px
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
 
-from _common.database_communicator.db_connector import DBConnector
-from _common.database_communicator.tables import DataMain, DataMainCols
+from _common.database_communicator.tables import DataMainCols
 
 
 class Dashboards:
-    def __init__(self, session: Session, engine: Engine):
-        query = session.query(DataMain).statement
-        self.data = pd.read_sql(query, engine)
+    def __init__(self, data: pd.DataFrame):
+        self.data = data
 
     def average_price_per_location(self):
         self.data["PRICE_PER_M2"] = (
@@ -154,14 +150,3 @@ class Dashboards:
             self.average_price_in_time_per_location(),
             self.offers_per_location(),
         ]
-
-
-if __name__ == "__main__":
-    db_connector = DBConnector()
-    session = db_connector.create_session()
-    engine = db_connector.create_sql_engine()
-    dashboards = Dashboards(session, engine)
-    dashboards.average_price_per_location().show()
-    dashboards.average_price_per_property_type().show()
-    dashboards.average_price_in_time_per_location().show()
-    dashboards.offers_per_location().show()
