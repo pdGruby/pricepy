@@ -1,19 +1,19 @@
-from io import BytesIO
 import re
+from io import BytesIO
+
 import pandas as pd
 import requests
 import streamlit as st
 from PIL import Image
+
 from _common.database_communicator.db_connector import DBConnector
-from _common.database_communicator.tables import DataMain, Opportunities, BargainletterEmails, BargainletterEmailsCols
-from _common.misc.variables import (
-    LOCATION_LIST,
-    PROPERTY_CONDITION_LIST,
-    PROPERTY_TYPE_LIST,
-    STATUS_LIST,
-)
+from _common.database_communicator.tables import (BargainletterEmails,
+                                                  BargainletterEmailsCols,
+                                                  DataMain, Opportunities)
+from _common.misc.variables import (LOCATION_LIST, PROPERTY_CONDITION_LIST,
+                                    PROPERTY_TYPE_LIST, STATUS_LIST)
+from app.dashboards import Dashboards
 from ml_model.pricepy_model import PricepyModel
-from app.dashboards import *
 
 st.set_page_config(
     page_title="Pricepy",
@@ -26,6 +26,13 @@ def create_db_connection():
     dbconn = DBConnector()
     engine = dbconn.create_sql_engine()
     return dbconn, engine
+
+
+@st.cache_data
+def load_dash_data(_dbconn, _engine):
+    session = _dbconn.create_session()
+    query = session.query(DataMain).statement
+    return pd.read_sql(query, _engine)
 
 
 @st.cache_data
@@ -245,9 +252,10 @@ with tab2:
 
 
 with tab3:
-    plots = Dashboards().get_all_figs()
-    for i in range(4):
-        st.plotly_chart(plots[i])
+    dash_df = load_dash_data(dbconn, engine)
+    plots = Dashboards(data=dash_df).get_all_figs()
+    for plot in plots:
+        st.plotly_chart(plot)
 
 
 with tab4:
