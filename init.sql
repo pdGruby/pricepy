@@ -71,10 +71,11 @@ CREATE TABLE IF NOT EXISTS opportunities
 
 CREATE TABLE IF NOT EXISTS bargainletter_emails
 (
-    email TEXT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
+    email TEXT,
     max_real_price DECIMAL,
     min_potential_gain DECIMAL,
-    "location" VARCHAR(30),
+    "location" VARCHAR(30)
 );
 
 GRANT ALL ON models TO "Zosia";
