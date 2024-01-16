@@ -1,36 +1,38 @@
 import pandas as pd
 import plotly.express as px
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
 
 from _common.database_communicator.db_connector import DBConnector
 from _common.database_communicator.tables import DataMain, DataMainCols
 
 
-class Dashboards(DBConnector):
-    def __init__(self):
-        super().__init__()
-        self.session = self.create_session()
-        self.engine = self.create_sql_engine()
-        query = self.session.query(DataMain).statement
-        self.data = pd.read_sql(query, self.engine)
+class Dashboards:
+    def __init__(self, session: Session, engine: Engine):
+        query = session.query(DataMain).statement
+        self.data = pd.read_sql(query, engine)
 
     def average_price_per_location(self):
+        self.data["PRICE_PER_M2"] = (
+            self.data[DataMainCols.PRICE] / self.data[DataMainCols.SIZE]
+        )
         df = (
-            self.data.groupby(DataMainCols.LOCATION)[DataMainCols.PRICE]
+            self.data.groupby(DataMainCols.LOCATION)["PRICE_PER_M2"]
             .mean()
             .reset_index()
         )
-        df = df.sort_values(by=DataMainCols.PRICE, ascending=False)
+        df = df.sort_values(by="PRICE_PER_M2", ascending=False)
         fig = px.bar(
             df,
-            x=DataMainCols.PRICE,
+            x="PRICE_PER_M2",
             y=DataMainCols.LOCATION,
             color=DataMainCols.LOCATION,
             orientation="h",
             labels={
-                DataMainCols.PRICE: "Średnia cena",
+                "PRICE_PER_M2": "Średnia cena za metr kwadratowy",
                 DataMainCols.LOCATION: "Lokalizacja",
             },
-            title="Średnia cena mieszkania w Poznaniu w zależności od lokalizacji",
+            title="Średnia cena za metr kwadratowy nieruchomości w Poznaniu w zależności od lokalizacji",
         )
         return fig
 
@@ -51,7 +53,7 @@ class Dashboards(DBConnector):
                 DataMainCols.PRICE: "Średnia cena",
                 DataMainCols.PROPERTY_TYPE: "Typ nieruchomości",
             },
-            title="Średnia cena mieszkania w Poznaniu w zależności od typu nieruchomości",
+            title="Średnia cena nieruchomości w Poznaniu w zależności od typu",
         )
         return fig
 
@@ -84,7 +86,7 @@ class Dashboards(DBConnector):
                 "PRICE_PER_M2": "Średnia cena za metr kwadratowy",
                 DataMainCols.INSERT_DATE: "Data",
             },
-            title="Średnia cena mieszkania za metr kwadratowy w Poznaniu w zależności od daty",
+            title="Średnia cena za metr kwadratowy nieruchomości w czasie",
         )
 
         locations = df[DataMainCols.LOCATION].unique().tolist()
@@ -141,7 +143,7 @@ class Dashboards(DBConnector):
                 DataMainCols.PRICE: "Liczba ofert",
                 DataMainCols.LOCATION: "Lokalizacja",
             },
-            title="Liczba ofert mieszkań w Poznaniu w zależności od lokalizacji",
+            title="Liczba ofert nieruchomości w Poznaniu w zależności od lokalizacji",
         )
         return fig
 
@@ -155,7 +157,10 @@ class Dashboards(DBConnector):
 
 
 if __name__ == "__main__":
-    dashboards = Dashboards()
+    db_connector = DBConnector()
+    session = db_connector.create_session()
+    engine = db_connector.create_sql_engine()
+    dashboards = Dashboards(session, engine)
     dashboards.average_price_per_location().show()
     dashboards.average_price_per_property_type().show()
     dashboards.average_price_in_time_per_location().show()
