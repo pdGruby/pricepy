@@ -1,19 +1,17 @@
-import re
-from io import BytesIO
-
 import pandas as pd
-import requests
 import streamlit as st
+import requests
+import re
 from PIL import Image
-
+from io import BytesIO
 from _common.database_communicator.db_connector import DBConnector
 from _common.database_communicator.tables import (BargainletterEmails,
-                                                  BargainletterEmailsCols,
                                                   DataMain, Opportunities)
 from _common.misc.variables import (LOCATION_LIST, PROPERTY_CONDITION_LIST,
                                     PROPERTY_TYPE_LIST, STATUS_LIST)
 from app.dashboards import Dashboards
 from ml_model.pricepy_model import PricepyModel
+
 
 st.set_page_config(
     page_title="Pricepy",
@@ -29,18 +27,27 @@ def create_db_connection():
 
 
 @st.cache_data
-def load_dash_data(_dbconn, _engine):
+def load_dashboards_data(_dbconn, _engine):
     session = _dbconn.create_session()
-    query = session.query(DataMain).statement
-    return pd.read_sql(query, _engine)
+    query = session.query(DataMain)
+    return pd.read_sql(query.statement, _engine)
 
 
 @st.cache_data
-def load_opportunities_from_db(_dbconn, _engine):
+def load_opportunities_data(_dbconn, _engine):
     session = _dbconn.create_session()
     query = session.query(Opportunities).add_columns(DataMain.location, DataMain.image_url, DataMain.price).outerjoin(
         DataMain)
     return pd.read_sql(query.statement, _engine)
+
+
+def add_bargainletter_info_to_db(_dbconn, email, max_real_price, min_potential_gain, location):
+    session = _dbconn.create_session()
+    email_obj = BargainletterEmails(email=email, max_real_price=max_real_price,
+                                    min_potential_gain=min_potential_gain / 100, location=location)
+    session.add(email_obj)
+    session.commit()
+    session.close()
 
 
 @st.cache_resource
@@ -76,13 +83,18 @@ def adjust_df(df_to_show, df, list, display_msg):
         return df_to_show, display_msg
 
 
-def add_bargainletter_info_to_db(_dbconn, email, max_real_price, min_potential_gain, location):
-    session = _dbconn.create_session()
-    email_obj = BargainletterEmails(email=email, max_real_price=max_real_price,
-                                    min_potential_gain=min_potential_gain, location=location)
-    session.add(email_obj)
-    session.commit()
-    session.close()
+def display_property_info(df, index):
+    price = format_number_with_spaces(df.loc[index, "price"])
+    predicted_price = format_number_with_spaces(df.loc[index, "predicted_price"])
+    response = requests.get(df.loc[index, "image_url"])
+    img = Image.open(BytesIO(response.content))
+    resized_img = img.resize(common_size)
+    st.image(resized_img)
+    st.markdown("#### " + df.loc[index, "location"])
+    st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
+    st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
+    url = df.loc[index, "url"]
+    show_button(url)
 
 
 hide_img_fs = '''
@@ -102,7 +114,7 @@ button[title="View fullscreen"] {
 st.markdown(hide_img_fs, unsafe_allow_html=True)
 
 dbconn, engine = create_db_connection()
-df = load_opportunities_from_db(dbconn, engine)
+df = load_opportunities_data(dbconn, engine)
 model = load_model()
 common_size = (200, 150)
 display_msg = False
@@ -125,50 +137,16 @@ with tab1:
     col4, col5, col6 = st.columns(3)
 
     with col4:
-
         df_to_show, display_msg = adjust_df(df_to_show, df, [0], display_msg)
-        price = format_number_with_spaces(df_to_show.loc[0, "price"])
-
-        predicted_price = format_number_with_spaces(df_to_show.loc[0, "predicted_price"])
-        response = requests.get(df_to_show.loc[0, "image_url"])
-        img = Image.open(BytesIO(response.content))
-        resized_img = img.resize(common_size)
-        st.image(resized_img)
-        st.markdown("#### " + df_to_show.loc[0, "location"])
-        st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
-        st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
-        url = df_to_show.loc[0, "url"]
-        show_button(url)
+        display_property_info(df=df_to_show, index=0)
 
     with col5:
         df_to_show, display_msg = adjust_df(df_to_show, df, [0, 1], display_msg)
-
-        price = format_number_with_spaces(df_to_show.loc[1, "price"])
-        predicted_price = format_number_with_spaces(df_to_show.loc[1, "predicted_price"])
-        response = requests.get(df_to_show.loc[1, "image_url"])
-        img = Image.open(BytesIO(response.content))
-        resized_img = img.resize(common_size)
-        st.image(resized_img)
-        st.markdown("#### " + df_to_show.loc[1, "location"])
-        st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
-        st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
-        url = df_to_show.loc[1, "url"]
-        show_button(url)
+        display_property_info(df=df_to_show, index=1)
 
     with col6:
         df_to_show, display_msg = adjust_df(df_to_show, df, [0, 1, 2], display_msg)
-
-        price = format_number_with_spaces(df_to_show.loc[2, "price"])
-        predicted_price = format_number_with_spaces(df_to_show.loc[2, "predicted_price"])
-        response = requests.get(df_to_show.loc[2, "image_url"])
-        img = Image.open(BytesIO(response.content))
-        resized_img = img.resize(common_size)
-        st.image(resized_img)
-        st.markdown("#### " + df_to_show.loc[2, "location"])
-        st.markdown("**Rzeczywista cena:** " + str(price) + " zł", unsafe_allow_html=True)
-        st.markdown("**Przewidywana cena:** " + str(predicted_price) + " zł", unsafe_allow_html=True)
-        url = df_to_show.loc[2, "url"]
-        show_button(url)
+        display_property_info(df=df_to_show, index=2)
 
     if display_msg:
         st.warning('Oj, niewiele okazji w tej lokalizacji...', icon='😔')
@@ -182,6 +160,19 @@ st.markdown(
 )
 
 col7, col8 = st.columns([0.7, 0.3])
+
+with col7:
+    st.markdown("#### Pricepy")
+    st.text(
+        "Precyzyjnie oszacujemy cenę każdego\nmieszkania oraz wskażemy najlepsze\ndostępne oferty, zapewniając "
+        "najbardziej\naktualne informacje o nieruchomościach."
+    )
+
+with col8:
+    st.markdown("#### Kontakt")
+    st.text("Adres")
+    st.text("Telefon XXX XXX XXX")
+    st.text("Mail pricepy@pr.pl")
 
 with tab2:
     with st.form("Properties"):
@@ -198,9 +189,9 @@ with tab2:
             rooms = st.slider("Liczba pokojów", min_value=1, max_value=10, value=3)
 
         with st.expander("Więcej cech"):
-            col1, col2 = st.columns([0.5, 0.5])
+            col3, col4 = st.columns([0.5, 0.5])
 
-            with col1:
+            with col3:
                 status = st.selectbox(
                     "Rynek", options=STATUS_LIST, index=None, placeholder="brak informacji"
                 )
@@ -212,7 +203,7 @@ with tab2:
                     placeholder="brak informacji",
                 )
 
-            with col2:
+            with col4:
                 property_type = st.selectbox(
                     "Typ budynku",
                     options=PROPERTY_TYPE_LIST,
@@ -223,10 +214,11 @@ with tab2:
                     "Piętro", min_value=0, value=None, placeholder="brak informacji"
                 )
 
-        col1, col2, col3= st.columns([0.43, 0.32, 0.25])
+        col5, col6, col7 = st.columns([0.43, 0.32, 0.25])
 
-        with col2:
+        with col6:
             btn_check = st.form_submit_button("Sprawdź", type="primary")
+
         if btn_check:
             floor = "brak informacji" if floor is None else floor
             year_built = "brak informacji" if year_built is None else year_built
@@ -250,42 +242,42 @@ with tab2:
             else:
                 st.markdown("### Przewidywana cena: " + str(format_number_with_spaces(predicted_price)) + " zł")
 
-
 with tab3:
-    dash_df = load_dash_data(dbconn, engine)
-    plots = Dashboards(data=dash_df).get_all_figs()
+    dashboards_df = load_dashboards_data(dbconn, engine)
+    plots = Dashboards(data=dashboards_df).get_all_figs()
     for plot in plots:
         st.plotly_chart(plot)
 
-
 with tab4:
+    col1, col2, col3 = st.columns([0.40, 0.30, 0.30])
 
-    col3, col4, col5 = st.columns([0.40, 0.30, 0.30])
-
-    with col4:
+    with col2:
         st.markdown('#### Bargainletter')
 
     with st.form("Bargainletter"):
-        col1, col2 = st.columns([0.5, 0.5])
-        with col1:
-            location = st.selectbox("Lokalizacja", options=['Cały Poznań'] + LOCATION_LIST,  key='loc_bl')
-            max_real_price = st.number_input(
-            "Maksymalna rzeczywista cena mieszkania [zł]",
-            min_value=0,
-            value=700000
-        )
+        col4, col5 = st.columns([0.5, 0.5])
 
-        with col2:
+        with col4:
+            location = st.selectbox("Lokalizacja", options=['Cały Poznań'] + LOCATION_LIST, key='loc_bl')
+            max_real_price = st.number_input(
+                "Maksymalna rzeczywista cena mieszkania [zł]",
+                min_value=0,
+                value=700000,
+                step=10000
+            )
+
+        with col5:
             min_potential_gain = st.number_input(
-            "Minimalny procent zysku",
-            min_value=0,
-            max_value=100,
-            value=10
-        )
+                "Minimalny procent zysku",
+                min_value=0,
+                max_value=100,
+                value=10
+            )
             email = st.text_input('Email', placeholder='przyklad@gmail.com')
 
-        col1, col2, col3 = st.columns([0.421, 0.279, 0.30])
-        with col2:
+        col6, col7, col8 = st.columns([0.421, 0.279, 0.30])
+
+        with col7:
             btn_subskrybuj = st.form_submit_button('Subskrybuj', type="primary")
 
         if btn_subskrybuj:
@@ -295,15 +287,3 @@ with tab4:
             else:
                 st.error('Wprowadź poprawny mail!', icon="❗")
 
-with col7:
-    st.markdown("#### Pricepy")
-    st.text(
-        "Precyzyjnie oszacujemy cenę każdego\nmieszkania oraz wskażemy najlepsze\ndostępne oferty, zapewniając "
-        "najbardziej\naktualne informacje o nieruchomościach."
-    )
-
-with col8:
-    st.markdown("#### Kontakt")
-    st.text("Adres")
-    st.text("Telefon XXX XXX XXX")
-    st.text("Mail pricepy@pr.pl")
