@@ -59,7 +59,7 @@ class DataMain(Base):
     insert_date = Column(DATE)
     last_time_seen = Column(DATE)
     row_hash = Column(String(64))
-    run_id = Column(String(30))
+    run_id = Column(String)
 
     ck_status = CheckConstraint(status.in_(["pierwotny", "wtórny"]))
     ck_property_type = CheckConstraint(
