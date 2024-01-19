@@ -23,20 +23,40 @@ class CrawlerOTODOM(CrawlerBase):
         self.click_button_with_text(text='Akceptuję')
 
     def get_next_page_arrow(self) -> WebElement:
-        button = self._find_element(By.XPATH, "//button[@data-cy='pagination.next-page']")
+        button = self._find_element(By.XPATH, "//li[@title='Go to next Page']")
+
+        # Old OTODOM version, perhaps will be removed completely by the developers in the nearest future
+        if button is None:
+            print("The old OTODOM webpage has just been loaded")
+            button = self._find_element(By.XPATH, "//button[@data-cy='pagination.next-page']")
+
+            if button is None:
+                print("Could not find the old next page button & the new old page button. End of available offers?")
+                return None
+        ###
+
         if button.get_attribute('disabled'):
             button = None
 
         return button
 
     def get_offer_urls(self, already_scraped_urls: List[str]) -> Union[List[str], bool]:
-        offers = self.driver.find_elements(By.XPATH, "//a[@data-cy='listing-item-link']")
+        offers = self.driver.find_elements(By.XPATH, "//a[@class='css-16vl3c1 e1njvixn0']")
+
+        # Old OTODOM version, perhaps will be removed completely by the developers in the nearest future
+        if not offers:
+            print("The old OTODOM webpage has just been loaded")
+            offers = self.driver.find_elements(By.XPATH, "//a[@data-cy='listing-item-link']")
+        ###
+
         if not self.check_if_offers_loaded_properly(offers):
             return False
 
         offer_urls = []
         for offer in offers:
             href = offer.get_property('href')
+            if '/inwestycja/' in href:
+                continue
 
             if href in self.main_scraped_urls:
                 self.seen_records_from_db[DataStagingCols.URL].append(href)
