@@ -45,7 +45,7 @@ def clean_data():
     on_completion=[send_finish_message], on_failure=[send_finish_message]
 )
 def run_crawlers():
-    scrape_olx_data()
+    # scrape_olx_data()
     scrape_otodom_data()
     clean_data()
 
