@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS data_main
     insert_date DATE,
     last_time_seen DATE,
     row_hash VARCHAR(64),
-    run_id VARCHAR(30)
+    run_id TEXT
 
     CONSTRAINT ck_status CHECK (status IN ('pierwotny', 'wtórny')),
     CONSTRAINT ck_property_type CHECK (property_type IN ('dom', 'kamienica', 'blok', 'apartamentowiec', 'inne')),
