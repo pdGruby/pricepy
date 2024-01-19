@@ -69,6 +69,10 @@ class Bargainletter(DBConnector):
                 if table_content:
                     tables_content += table_content
 
+            if tables_content == "":
+                print(f'No offers found for the {email}. Continuing...')
+                continue
+
             message = self.message_structure_html.strip().format(**{"table": tables_content})
             messages.append((email, message))
 
